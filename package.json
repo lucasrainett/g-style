@@ -1,31 +1,39 @@
 {
-  "name": "global-style",
-  "version": "1.0.0",
-  "license": "MIT",
-  "main": "lib/index.js",
-  "types": "lib",
-  "scripts": {
-    "test": "jest",
-    "build": "tsc",
-    "format": "prettier --write src"
-  },
-  "devDependencies": {
-    "@types/jest": "^26.0.4",
-    "husky": "^4.2.5",
-    "jest": "^26.1.0",
-    "prettier": "^2.0.5",
-    "ts-jest": "^26.1.1",
-    "typescript": "^3.9.6"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "setupFiles": [
-      "./jest.setup.ts"
-    ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run format"
-    }
-  }
+	"name": "g-style",
+	"version": "1.0.0",
+	"license": "MIT",
+	"main": "lib/index.js",
+	"types": "lib",
+	"author": "Lucas Rainett",
+	"scripts": {
+		"test": "jest",
+		"build": "tsc",
+		"format": "prettier --write src"
+	},
+	"files": [
+		"lib"
+	],
+	"repository": {
+		"type": "git",
+		"url": "ssh://git@github.com/lucasrainett/g-style.git"
+	},
+	"devDependencies": {
+		"@types/jest": "^26.0.4",
+		"husky": "^4.2.5",
+		"jest": "^26.1.0",
+		"prettier": "^2.0.5",
+		"ts-jest": "^26.1.1",
+		"typescript": "^3.9.6"
+	},
+	"jest": {
+		"preset": "ts-jest",
+		"setupFiles": [
+			"./jest.setup.ts"
+		]
+	},
+	"husky": {
+		"hooks": {
+			"pre-commit": "npm run format"
+		}
+	}
 }
