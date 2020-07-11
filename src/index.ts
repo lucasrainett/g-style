@@ -44,6 +44,7 @@ export class GlobalStyle{
             .join(" ");
     }
 
+
     public getClassNames(style: CssObject) {
         return this.parseCssObject(style);
     }

@@ -14,6 +14,7 @@ describe("GlobalStyle", () => {
         });
     });
 
+
     it("should create class name", () => {
         const globalStyle = new GlobalStyle();
         const classNames = globalStyle.getClassNames({color: "gold"});
