@@ -1,0 +1,23 @@
+{
+  "name": "global-style",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.4",
+    "jest": "^26.1.0",
+    "ts-jest": "^26.1.1",
+    "typescript": "^3.9.6"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "setupFiles": [
+      "./jest.setup.ts"
+    ]
+  }
+}
