@@ -77,7 +77,7 @@ const className = gStyle.getClassNames({
 ```js
 const className = gStyle.getClassNames({
   color: "gold",
-  "> a": {
+  ".link": {
     color: "red"
   }
 })
