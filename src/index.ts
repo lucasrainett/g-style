@@ -1,5 +1,5 @@
 export interface CssObject {
-	[key: string]: string | CssObject;
+	[key: string]: string | string[] | CssObject;
 }
 
 export class GlobalStyle {
@@ -11,6 +11,60 @@ export class GlobalStyle {
 		if (typeof document !== "undefined") {
 			this.sheet = document.head.appendChild(document.createElement("style"))
 				.sheet as CSSStyleSheet;
+		}
+	}
+
+	private parseStringValue(
+		styleKey: string,
+		value: string,
+		childSelector: string = "",
+		mediaQuery: string = ""
+	) {
+		const cacheKey = styleKey + value + childSelector + mediaQuery;
+		if (!this.cache[cacheKey]) {
+			const className = this.prefix + this.rules.length.toString(36);
+			const style = `.${className}${childSelector}{${styleKey}:${value};}`;
+			const rule = mediaQuery ? `${mediaQuery}{${style}}` : style;
+			this.cache[cacheKey] = className;
+			this.rules.push(rule);
+			if (this.sheet) {
+				this.sheet.insertRule(rule, this.sheet.cssRules.length);
+			}
+		}
+		return this.cache[cacheKey];
+	}
+
+	private parseObjectValue(
+		styleKey: string,
+		value: any,
+		childSelector: string = "",
+		mediaQuery: string = ""
+	) {
+		if (styleKey.startsWith("@media")) {
+			return this.parseCssObject(value, childSelector, styleKey);
+		} else {
+			const formattedChildKey = styleKey.startsWith("&")
+				? styleKey.substr(1)
+				: " " + styleKey;
+			return this.parseCssObject(value, childSelector + formattedChildKey, mediaQuery);
+		}
+	}
+
+	private parseValue(
+		styleKey: string,
+		value: any,
+		childSelector: string = "",
+		mediaQuery: string = ""
+	): string {
+		if (typeof value === "string") {
+			return this.parseStringValue(styleKey, value, childSelector, mediaQuery);
+		} else if (Array.isArray(value)) {
+			return value
+				.filter((val) => typeof val === "string")
+				.map((val) => this.parseStringValue(styleKey, val, childSelector, mediaQuery))
+				.join(" ");
+		} else {
+			return this.parseObjectValue(styleKey, value, childSelector, mediaQuery);
 		}
 	}
 
@@ -27,33 +81,7 @@ export class GlobalStyle {
 					.replace(/[A-Z]|^ms/g, "-$&")
 					.toLowerCase();
 				const value = style[key];
-				if (typeof value === "string") {
-					const cacheKey = styleKey + value + childSelector + mediaQuery;
-					if (!this.cache[cacheKey]) {
-						const className = this.prefix + this.rules.length.toString(36);
-						const style = `.${className}${childSelector}{${styleKey}:${value};}`;
-						const rule = mediaQuery ? `${mediaQuery}{${style}}` : style;
-						this.cache[cacheKey] = className;
-						this.rules.push(rule);
-						if (this.sheet) {
-							this.sheet.insertRule(rule, this.sheet.cssRules.length);
-						}
-					}
-					return this.cache[cacheKey];
-				} else {
-					if (styleKey.startsWith("@media")) {
-						return this.parseCssObject(value, childSelector, styleKey);
-					} else {
-						const formattedChildKey = styleKey.startsWith("&")
-							? styleKey.substr(1)
-							: " " + styleKey;
-						return this.parseCssObject(
-							value,
-							childSelector + formattedChildKey,
-							mediaQuery
-						);
-					}
-				}
+				return this.parseValue(styleKey, value, childSelector, mediaQuery);
 			})
 			.join(" ");
 	}
