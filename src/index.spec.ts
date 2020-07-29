@@ -168,4 +168,31 @@ describe("GlobalStyle", () => {
 			].join("\n")
 		);
 	});
+
+	it("should support multiple values", () => {
+		const globalStyle = new GlobalStyle();
+		const className = globalStyle.getClassNames({
+			color: "gold",
+			display: ["flex", "-webkit-flex"],
+			"@media print": {
+				display: ["flex", "-ms-flex"]
+			},
+			"&.button": {
+				display: ["flex", "-moz-flex"]
+			}
+		});
+
+		expect(className).toEqual("t0 t1 t2 t3 t4 t5 t6");
+		expect(globalStyle.getFullCss()).toEqual(
+			[
+				".t0{color:gold;}",
+				".t1{display:flex;}",
+				".t2{display:-webkit-flex;}",
+				".t5.button{display:flex;}",
+				".t6.button{display:-moz-flex;}",
+				"@media print{.t3{display:flex;}}",
+				"@media print{.t4{display:-ms-flex;}}"
+			].join("\n")
+		);
+	});
 });
