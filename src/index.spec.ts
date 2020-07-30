@@ -195,4 +195,19 @@ describe("GlobalStyle", () => {
 			].join("\n")
 		);
 	});
+
+	it("should support strings and numbers on multiple values", () => {
+		const globalStyle = new GlobalStyle();
+		const className = globalStyle.getClassNames({
+			test: ["string", 10],
+		});
+
+		expect(className).toEqual("t0 t1");
+		expect(globalStyle.getFullCss()).toEqual(
+			[
+				".t0{test:string;}",
+				".t1{test:10;}"
+			].join("\n")
+		);
+	});
 });

@@ -70,6 +70,13 @@ const className = gStyle.getClassNames({
 })
 ```
 
+### Multi value Array for vendor prefixing
+```js
+const className = gStyle.getClassNames({
+  display: ["flex", "-webkit-flex"]
+})
+```
+
 ### Child Selectors
 
 ####One more difference comparing to CXS, child selectors don't need to start with a space symbol.

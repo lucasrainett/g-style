@@ -1,5 +1,5 @@
 export interface CssObject {
-	[key: string]: string | string[] | CssObject;
+	[key: string]: string | number | Array<string | number> | CssObject;
 }
 
 export class GlobalStyle {
@@ -40,10 +40,10 @@ export class GlobalStyle {
 		childSelector: string = "",
 		mediaQuery: string = ""
 	) {
-		if (styleKey.startsWith("@media")) {
+		if (styleKey.indexOf("@media") === 0) {
 			return this.parseCssObject(value, childSelector, styleKey);
 		} else {
-			const formattedChildKey = styleKey.startsWith("&")
+			const formattedChildKey = styleKey.indexOf("&") === 0
 				? styleKey.substr(1)
 				: " " + styleKey;
 			return this.parseCssObject(value, childSelector + formattedChildKey, mediaQuery);
@@ -60,7 +60,7 @@ export class GlobalStyle {
 			return this.parseStringValue(styleKey, value, childSelector, mediaQuery);
 		} else if (Array.isArray(value)) {
 			return value
-				.filter((val) => typeof val === "string")
+				.filter((val) => typeof val === "string" || typeof val === "number")
 				.map((val) => this.parseStringValue(styleKey, val, childSelector, mediaQuery))
 				.join(" ");
 		} else {
@@ -75,14 +75,11 @@ export class GlobalStyle {
 	): string {
 		return Object.keys(style)
 			.filter((key) => Boolean(style[key]))
-			.map((key): string => {
-				const styleKey = key
+			.map((key): string =>
+				this.parseValue(key
 					.trim()
 					.replace(/[A-Z]|^ms/g, "-$&")
-					.toLowerCase();
-				const value = style[key];
-				return this.parseValue(styleKey, value, childSelector, mediaQuery);
-			})
+					.toLowerCase(), style[key], childSelector, mediaQuery))
 			.join(" ");
 	}
 
