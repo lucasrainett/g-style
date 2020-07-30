@@ -43,9 +43,8 @@ export class GlobalStyle {
 		if (styleKey.indexOf("@media") === 0) {
 			return this.parseCssObject(value, childSelector, styleKey);
 		} else {
-			const formattedChildKey = styleKey.indexOf("&") === 0
-				? styleKey.substr(1)
-				: " " + styleKey;
+			const formattedChildKey =
+				styleKey.indexOf("&") === 0 ? styleKey.substr(1) : " " + styleKey;
 			return this.parseCssObject(value, childSelector + formattedChildKey, mediaQuery);
 		}
 	}
@@ -76,10 +75,16 @@ export class GlobalStyle {
 		return Object.keys(style)
 			.filter((key) => Boolean(style[key]))
 			.map((key): string =>
-				this.parseValue(key
-					.trim()
-					.replace(/[A-Z]|^ms/g, "-$&")
-					.toLowerCase(), style[key], childSelector, mediaQuery))
+				this.parseValue(
+					key
+						.trim()
+						.replace(/[A-Z]|^ms/g, "-$&")
+						.toLowerCase(),
+					style[key],
+					childSelector,
+					mediaQuery
+				)
+			)
 			.join(" ");
 	}
 
