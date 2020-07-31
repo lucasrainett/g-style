@@ -16,7 +16,7 @@ export class GlobalStyle {
 
 	private parseStringValue(
 		styleKey: string,
-		value: string,
+		value: string | number,
 		childSelector: string = "",
 		mediaQuery: string = ""
 	) {
@@ -36,7 +36,7 @@ export class GlobalStyle {
 
 	private parseObjectValue(
 		styleKey: string,
-		value: any,
+		value: CssObject,
 		childSelector: string = "",
 		mediaQuery: string = ""
 	) {
@@ -51,11 +51,11 @@ export class GlobalStyle {
 
 	private parseValue(
 		styleKey: string,
-		value: any,
+		value: string | number | Array<string | number> | CssObject,
 		childSelector: string = "",
 		mediaQuery: string = ""
 	): string {
-		if (typeof value === "string") {
+		if (typeof value === "string" || typeof value === "number") {
 			return this.parseStringValue(styleKey, value, childSelector, mediaQuery);
 		} else if (Array.isArray(value)) {
 			return value

@@ -199,10 +199,13 @@ describe("GlobalStyle", () => {
 	it("should support strings and numbers on multiple values", () => {
 		const globalStyle = new GlobalStyle();
 		const className = globalStyle.getClassNames({
-			test: ["string", 10]
+			test: ["string", 10],
+			test2: 11
 		});
 
-		expect(className).toEqual("t0 t1");
-		expect(globalStyle.getFullCss()).toEqual([".t0{test:string;}", ".t1{test:10;}"].join("\n"));
+		expect(className).toEqual("t0 t1 t2");
+		expect(globalStyle.getFullCss()).toEqual(
+			[".t0{test:string;}", ".t1{test:10;}", ".t2{test2:11;}"].join("\n")
+		);
 	});
 });
