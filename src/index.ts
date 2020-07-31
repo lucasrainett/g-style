@@ -61,7 +61,8 @@ export class GlobalStyle {
 			return value
 				.filter((val) => typeof val === "string" || typeof val === "number")
 				.map((val) => this.parseStringValue(styleKey, val, childSelector, mediaQuery))
-				.join(" ");
+				.join(" ")
+				.trim();
 		} else {
 			return this.parseObjectValue(styleKey, value, childSelector, mediaQuery);
 		}
@@ -85,7 +86,8 @@ export class GlobalStyle {
 					mediaQuery
 				)
 			)
-			.join(" ");
+			.join(" ")
+			.trim();
 	}
 
 	public getClassNames(style: CssObject) {
