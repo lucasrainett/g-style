@@ -212,13 +212,13 @@ describe("GlobalStyle", () => {
 	});
 
 	it("should use provided nonce", () => {
-		const globalStyle = new GlobalStyle({nonce: "random"});
-		globalStyle.getClassNames({border: "1px"});
+		const globalStyle = new GlobalStyle({ nonce: "random" });
+		globalStyle.getClassNames({ border: "1px" });
 
 		const expectedStyle = document.createElement("style");
 		expectedStyle.setAttribute("nonce", "random");
 
-		expect(document.head.appendChild).toHaveBeenCalledWith(expectedStyle)
+		expect(document.head.appendChild).toHaveBeenCalledWith(expectedStyle);
 	});
 
 	it("should use nonce from meta tag", () => {
@@ -228,11 +228,11 @@ describe("GlobalStyle", () => {
 		(document.querySelector as jest.Mock).mockReturnValue(cspMeta);
 
 		const globalStyle = new GlobalStyle();
-		globalStyle.getClassNames({border: "1px"});
+		globalStyle.getClassNames({ border: "1px" });
 
 		const expectedStyle = document.createElement("style");
 		expectedStyle.setAttribute("nonce", "random-nonce");
 
-		expect(document.head.appendChild).toHaveBeenCalledWith(expectedStyle)
+		expect(document.head.appendChild).toHaveBeenCalledWith(expectedStyle);
 	});
 });

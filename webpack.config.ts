@@ -6,6 +6,7 @@ export default [{
     },
     output: {
         libraryTarget: "umd",
+		library: "GlobalStyle",
         filename: "index.umd.js"
     },
     module: {
