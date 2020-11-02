@@ -1,21 +1,16 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
     "declaration": true,
-    "declarationMap": true,
+    "outDir": "dist",
+    "target": "es5",
     "sourceMap": true,
-    "outDir": "lib",
     "removeComments": true,
     "importHelpers": true,
+    "module": "commonjs",
     "strict": true,
-    "alwaysStrict": true,
     "esModuleInterop": true,
-    "allowUmdGlobalAccess": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "src/index.ts"
-  ]
+  "include": ["src/index.ts"]
 }

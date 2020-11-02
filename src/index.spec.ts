@@ -8,8 +8,8 @@ describe("GlobalStyle", () => {
 		(document.head.appendChild as jest.Mock).mockReturnValue({
 			sheet: {
 				insertRule,
-				cssRules: []
-			}
+				cssRules: [],
+			},
 		});
 	});
 
@@ -41,8 +41,8 @@ describe("GlobalStyle", () => {
 		const className = globalStyle.getClassNames({
 			color: "gold",
 			"&:hover": {
-				color: "black"
-			}
+				color: "black",
+			},
 		});
 
 		expect(className).toEqual("t0 t1");
@@ -56,8 +56,8 @@ describe("GlobalStyle", () => {
 		globalStyle.getClassNames({
 			color: "gold",
 			"@media print": {
-				color: "black"
-			}
+				color: "black",
+			},
 		});
 		expect(globalStyle.getFullCss()).toEqual(
 			[".t0{color:gold;}", "@media print{.t1{color:black;}}"].join("\n")
@@ -70,26 +70,28 @@ describe("GlobalStyle", () => {
 			color: "gold",
 			"@media screen": {
 				"&:hover": {
-					color: "black"
-				}
-			}
+					color: "black",
+				},
+			},
 		});
 		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{color:gold;}", "@media screen{.t1:hover{color:black;}}"].join("\n")
+			[".t0{color:gold;}", "@media screen{.t1:hover{color:black;}}"].join(
+				"\n"
+			)
 		);
 	});
 
 	it("should ignore null values", () => {
 		const globalStyle = new GlobalStyle();
 		const classNames = globalStyle.getClassNames({
-			color: null
+			color: null,
 		} as any);
 		expect(classNames).toEqual("");
 		expect(globalStyle.getFullCss()).toEqual("");
 	});
 
 	it("should accept custom prefix", () => {
-		const globalStyle = new GlobalStyle("_cxs");
+		const globalStyle = new GlobalStyle({ prefix: "_cxs" });
 		globalStyle.getClassNames({ color: "gold" });
 		expect(globalStyle.getFullCss()).toEqual("._cxs0{color:gold;}");
 	});
@@ -99,8 +101,8 @@ describe("GlobalStyle", () => {
 		const className = globalStyle.getClassNames({
 			color: "gold",
 			".button": {
-				color: "black"
-			}
+				color: "black",
+			},
 		});
 
 		expect(className).toEqual("t0 t1");
@@ -114,8 +116,8 @@ describe("GlobalStyle", () => {
 		const className = globalStyle.getClassNames({
 			color: "gold",
 			"&.button": {
-				color: "black"
-			}
+				color: "black",
+			},
 		});
 
 		expect(className).toEqual("t0 t1");
@@ -125,15 +127,15 @@ describe("GlobalStyle", () => {
 	});
 
 	it("should support multiple instances", () => {
-		const globalStyle1 = new GlobalStyle("test1");
-		const globalStyle2 = new GlobalStyle("test2");
+		const globalStyle1 = new GlobalStyle({ prefix: "test1" });
+		const globalStyle2 = new GlobalStyle({ prefix: "test2" });
 
 		const className1 = globalStyle1.getClassNames({
-			color: "gold"
+			color: "gold",
 		});
 
 		const className2 = globalStyle2.getClassNames({
-			color: "gold"
+			color: "gold",
 		});
 
 		expect(className1).toEqual("test10");
@@ -148,14 +150,14 @@ describe("GlobalStyle", () => {
 		const className = globalStyle.getClassNames({
 			color: "gold",
 			".box": {
-				backgroundColor: "red"
+				backgroundColor: "red",
 			},
 			"&.button": {
-				color: "black"
+				color: "black",
 			},
 			"@media print": {
-				border: "1px solid #ccc"
-			}
+				border: "1px solid #ccc",
+			},
 		});
 
 		expect(className).toEqual("t0 t1 t2 t3");
@@ -164,7 +166,7 @@ describe("GlobalStyle", () => {
 				".t0{color:gold;}",
 				".t1 .box{background-color:red;}",
 				".t2.button{color:black;}",
-				"@media print{.t3{border:1px solid #ccc;}}"
+				"@media print{.t3{border:1px solid #ccc;}}",
 			].join("\n")
 		);
 	});
@@ -175,11 +177,11 @@ describe("GlobalStyle", () => {
 			color: "gold",
 			display: ["flex", "-webkit-flex"],
 			"@media print": {
-				display: ["flex", "-ms-flex"]
+				display: ["flex", "-ms-flex"],
 			},
 			"&.button": {
-				display: ["flex", "-moz-flex"]
-			}
+				display: ["flex", "-moz-flex"],
+			},
 		});
 
 		expect(className).toEqual("t0 t1 t2 t3 t4 t5 t6");
@@ -191,7 +193,7 @@ describe("GlobalStyle", () => {
 				".t5.button{display:flex;}",
 				".t6.button{display:-moz-flex;}",
 				"@media print{.t3{display:flex;}}",
-				"@media print{.t4{display:-ms-flex;}}"
+				"@media print{.t4{display:-ms-flex;}}",
 			].join("\n")
 		);
 	});
@@ -200,12 +202,37 @@ describe("GlobalStyle", () => {
 		const globalStyle = new GlobalStyle();
 		const className = globalStyle.getClassNames({
 			test: ["string", 10],
-			test2: 11
+			test2: 11,
 		});
 
 		expect(className).toEqual("t0 t1 t2");
 		expect(globalStyle.getFullCss()).toEqual(
 			[".t0{test:string;}", ".t1{test:10;}", ".t2{test2:11;}"].join("\n")
 		);
+	});
+
+	it("should use provided nonce", () => {
+		const globalStyle = new GlobalStyle({nonce: "random"});
+		globalStyle.getClassNames({border: "1px"});
+
+		const expectedStyle = document.createElement("style");
+		expectedStyle.setAttribute("nonce", "random");
+
+		expect(document.head.appendChild).toHaveBeenCalledWith(expectedStyle)
+	});
+
+	it("should use nonce from meta tag", () => {
+		const cspMeta = document.createElement("meta");
+		cspMeta.setAttribute("property", "csp-nonce");
+		cspMeta.setAttribute("content", "random-nonce");
+		(document.querySelector as jest.Mock).mockReturnValue(cspMeta);
+
+		const globalStyle = new GlobalStyle();
+		globalStyle.getClassNames({border: "1px"});
+
+		const expectedStyle = document.createElement("style");
+		expectedStyle.setAttribute("nonce", "random-nonce");
+
+		expect(document.head.appendChild).toHaveBeenCalledWith(expectedStyle)
 	});
 });

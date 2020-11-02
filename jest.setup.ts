@@ -3,3 +3,7 @@ Object.defineProperty(document, "head", {
         appendChild: jest.fn()
     }
 });
+
+Object.defineProperty(document, "querySelector", {
+	value:  jest.fn()
+});

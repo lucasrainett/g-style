@@ -1,5 +1,12 @@
+export type CssValue = string | number | Array<string | number> | CssObject;
+
 export interface CssObject {
-	[key: string]: string | number | Array<string | number> | CssObject;
+	[key: string]: CssValue;
+}
+
+export interface IConfig {
+	prefix?: string;
+	nonce?: string;
 }
 
 export class GlobalStyle {
@@ -7,11 +14,29 @@ export class GlobalStyle {
 	private readonly rules: string[] = [];
 	private readonly sheet?: CSSStyleSheet;
 
-	constructor(private prefix: string = "t") {
+	constructor(private config: IConfig = {}) {
+		this.config.prefix = this.config.prefix || "t";
+
 		if (typeof document !== "undefined") {
-			this.sheet = document.head.appendChild(document.createElement("style"))
+			const style = document.createElement("style");
+			const nonce = this.config.nonce || GlobalStyle.getNonceFromMeta();
+			if (nonce) {
+				style.setAttribute("nonce", nonce);
+			}
+			this.sheet = document.head.appendChild(style)
 				.sheet as CSSStyleSheet;
 		}
+	}
+
+	private static getNonceFromMeta() {
+		const metaCsp = document.querySelector("meta[property=csp-nonce]");
+		if (metaCsp) {
+			const nonce = metaCsp.getAttribute("content");
+			if (nonce) {
+				return nonce;
+			}
+		}
+		return undefined;
 	}
 
 	private parseStringValue(
@@ -22,7 +47,8 @@ export class GlobalStyle {
 	) {
 		const cacheKey = styleKey + value + childSelector + mediaQuery;
 		if (!this.cache[cacheKey]) {
-			const className = this.prefix + this.rules.length.toString(36);
+			const className =
+				this.config.prefix + this.rules.length.toString(36);
 			const style = `.${className}${childSelector}{${styleKey}:${value};}`;
 			const rule = mediaQuery ? `${mediaQuery}{${style}}` : style;
 			this.cache[cacheKey] = className;
@@ -44,27 +70,52 @@ export class GlobalStyle {
 			return this.parseCssObject(value, childSelector, styleKey);
 		} else {
 			const formattedChildKey =
-				styleKey.indexOf("&") === 0 ? styleKey.substr(1) : " " + styleKey;
-			return this.parseCssObject(value, childSelector + formattedChildKey, mediaQuery);
+				styleKey.indexOf("&") === 0
+					? styleKey.substr(1)
+					: " " + styleKey;
+			return this.parseCssObject(
+				value,
+				childSelector + formattedChildKey,
+				mediaQuery
+			);
 		}
 	}
 
 	private parseValue(
 		styleKey: string,
-		value: string | number | Array<string | number> | CssObject,
+		value: CssValue,
 		childSelector: string = "",
 		mediaQuery: string = ""
 	): string {
 		if (typeof value === "string" || typeof value === "number") {
-			return this.parseStringValue(styleKey, value, childSelector, mediaQuery);
+			return this.parseStringValue(
+				styleKey,
+				value,
+				childSelector,
+				mediaQuery
+			);
 		} else if (Array.isArray(value)) {
 			return value
-				.filter((val) => typeof val === "string" || typeof val === "number")
-				.map((val) => this.parseStringValue(styleKey, val, childSelector, mediaQuery))
+				.filter(
+					(val) => typeof val === "string" || typeof val === "number"
+				)
+				.map((val) =>
+					this.parseStringValue(
+						styleKey,
+						val,
+						childSelector,
+						mediaQuery
+					)
+				)
 				.join(" ")
 				.trim();
 		} else {
-			return this.parseObjectValue(styleKey, value, childSelector, mediaQuery);
+			return this.parseObjectValue(
+				styleKey,
+				value,
+				childSelector,
+				mediaQuery
+			);
 		}
 	}
 

@@ -114,13 +114,29 @@ ${html}
 `
 ```
 
+
+### Security
+
+Global Style will read the csp nonce from meta tag automatically
+
+```html
+<meta property="csp-nonce" content="random-nonce">
+```
+
+You can optionally provide a nonce when creating the instance
+
+```js
+const gStyle = new GlobalStyle({nonce:"random-nonce"})
+```
+
+
 ## API
 
 ### `const gStyle = new GlobalStyle()`
 
 Create a new gStyle instance
 
-### `const gStyle = new GlobalStyle("prefix")`
+### `const gStyle = new GlobalStyle({prefix:"prefix", nonce:"random"})`
 
 Create a new gStyle instance with custom prefix
 
