@@ -1,9 +1,11 @@
 import {Configuration} from "webpack";
 
-export default [{
+export default {
+	mode: "production",
     resolve: {
         extensions: [".ts"],
     },
+	target: "es5",
     output: {
         libraryTarget: "umd",
 		library: "GlobalStyle",
@@ -17,4 +19,4 @@ export default [{
             },
         ],
     }
-}] as Configuration[];
+} as Configuration;
