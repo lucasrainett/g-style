@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "test": "jest",
+    "test": "jest --coverage",
     "format": "prettier --write src",
     "build": "webpack && tsc --emitDeclarationOnly"
   },

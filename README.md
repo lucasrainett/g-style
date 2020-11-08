@@ -115,6 +115,23 @@ ${html}
 ```
 
 
+### Keyframe support
+
+```js
+const className = gStyle.getClassNames({
+    "@keyframes spin": {
+        "0%": {
+            transform: "rotate(0deg)"
+        },
+        "100%": {
+            transform: "rotate(360deg)"
+        }
+    },
+    animation: "spin 5s infinite",
+})
+```
+
+
 ### Security
 
 Global Style will read the csp nonce from meta tag automatically

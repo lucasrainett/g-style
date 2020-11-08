@@ -235,4 +235,29 @@ describe("GlobalStyle", () => {
 
 		expect(document.head.appendChild).toHaveBeenCalledWith(expectedStyle);
 	});
+
+	it("should support @keyframes", () => {
+		const globalStyle = new GlobalStyle();
+		const className = globalStyle.getClassNames({
+			animation: "spin 5s infinite",
+			"@keyframes spin": {
+				"0%": {
+					transform: "rotate(0deg)",
+					border: "1px",
+				},
+				"100%": {
+					transform: "rotate(360deg)",
+					border: "2px",
+				},
+			},
+		});
+
+		expect(className).toEqual("t0");
+		expect(globalStyle.getFullCss()).toEqual(
+			[
+				".t0{animation:spin 5s infinite;}",
+				"@keyframes spin{0%{transform:rotate(0deg);border:1px;}100%{transform:rotate(360deg);border:2px;}}",
+			].join("\n")
+		);
+	});
 });

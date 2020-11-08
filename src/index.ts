@@ -39,6 +39,20 @@ export class GlobalStyle {
 		return undefined;
 	}
 
+	private static cleanText(text: string) {
+		return text
+			.trim()
+			.replace(/[A-Z]|^ms/g, "-$&")
+			.toLowerCase();
+	}
+
+	private insertRule(rule: string) {
+		this.rules.push(rule);
+		if (this.sheet) {
+			this.sheet.insertRule(rule, this.sheet.cssRules.length);
+		}
+	}
+
 	private parseStringValue(
 		styleKey: string,
 		value: string | number,
@@ -52,12 +66,34 @@ export class GlobalStyle {
 			const style = `.${className}${childSelector}{${styleKey}:${value};}`;
 			const rule = mediaQuery ? `${mediaQuery}{${style}}` : style;
 			this.cache[cacheKey] = className;
-			this.rules.push(rule);
-			if (this.sheet) {
-				this.sheet.insertRule(rule, this.sheet.cssRules.length);
-			}
+			this.insertRule(rule);
 		}
 		return this.cache[cacheKey];
+	}
+
+	private parseKeyFrame(
+		keyframeKey: string,
+		keyframeObject: CssObject & any
+	) {
+		const keyframeValue = Object.keys(keyframeObject)
+			.map((keyframeStageKey) => {
+				const keyframeStage = keyframeObject[keyframeStageKey];
+				const entryValue = Object.keys(keyframeStage)
+					.map(GlobalStyle.cleanText)
+					.map(
+						(keyframeRuleKey) =>
+							`${keyframeRuleKey}:${keyframeStage[keyframeRuleKey]};`
+					)
+					.join("");
+				return `${keyframeStageKey}{${entryValue}}`;
+			})
+			.join("");
+		const rule = `${keyframeKey}{${keyframeValue}}`;
+		if (!this.cache[rule]) {
+			this.cache[rule] = "cache";
+			this.insertRule(rule);
+		}
+		return "";
 	}
 
 	private parseObjectValue(
@@ -66,7 +102,9 @@ export class GlobalStyle {
 		childSelector: string = "",
 		mediaQuery: string = ""
 	) {
-		if (styleKey.indexOf("@media") === 0) {
+		if (styleKey.indexOf("@keyframes") === 0) {
+			return this.parseKeyFrame(styleKey, value);
+		} else if (styleKey.indexOf("@media") === 0) {
 			return this.parseCssObject(value, childSelector, styleKey);
 		} else {
 			const formattedChildKey =
@@ -128,10 +166,7 @@ export class GlobalStyle {
 			.filter((key) => Boolean(style[key]))
 			.map((key): string =>
 				this.parseValue(
-					key
-						.trim()
-						.replace(/[A-Z]|^ms/g, "-$&")
-						.toLowerCase(),
+					GlobalStyle.cleanText(key),
 					style[key],
 					childSelector,
 					mediaQuery
