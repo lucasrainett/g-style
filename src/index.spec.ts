@@ -126,6 +126,16 @@ describe("GlobalStyle", () => {
 		);
 	});
 
+	it("should handles zero value", () => {
+		const globalStyle = new GlobalStyle();
+		const className = globalStyle.getClassNames({
+			margin: 0,
+		});
+
+		expect(className).toEqual("t0");
+		expect(globalStyle.getFullCss()).toEqual(".t0{margin:0;}");
+	});
+
 	it("should support multiple instances", () => {
 		const globalStyle1 = new GlobalStyle({ prefix: "test1" });
 		const globalStyle2 = new GlobalStyle({ prefix: "test2" });

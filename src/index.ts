@@ -163,7 +163,9 @@ export class GlobalStyle {
 		mediaQuery: string = ""
 	): string {
 		return Object.keys(style)
-			.filter((key) => Boolean(style[key]))
+			.filter(
+				(key) => typeof style[key] === "number" || Boolean(style[key])
+			)
 			.map((key): string =>
 				this.parseValue(
 					GlobalStyle.cleanText(key),
