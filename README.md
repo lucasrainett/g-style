@@ -134,6 +134,21 @@ const className = gStyle.getClassNames({
 })
 ```
 
+### Support comma separated style key
+
+```js
+const globalStyle = new GlobalStyle();
+const className = globalStyle.getClassNames({
+    "code,kbd,samp": { fontSize: "1em" },
+});
+```
+Will create all style rules
+```css
+.t0 code{font-size:1em;}
+.t1 kbd{font-size:1em;}
+.t2 samp{font-size:1em;}
+```
+
 
 ### Security
 

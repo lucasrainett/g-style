@@ -10,7 +10,49 @@ export interface IConfig {
 }
 
 // https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59
-const noAutoPixel = ["animation-iteration-count", "border-image-outset", "border-image-slice", "border-image-width", "box-flex", "box-flex-group", "box-ordinal-group", "column-count", "columns", "flex", "flex-grow", "flex-positive", "flex-shrink", "flex-negative", "flex-order", "grid-row", "grid-row-end", "grid-row-span", "grid-row-start", "grid-column", "grid-column-end", "grid-column-span", "grid-column-start", "font-weight", "line-clamp", "line-height", "opacity", "order", "orphans", "tab-size", "widows", "z-index", "zoom", "fill-opacity", "flood-opacity", "stop-opacity", "stroke-dasharray", "stroke-dashoffset", "stroke-miterlimit", "stroke-opacity", "stroke-width"];
+const noAutoPixel = [
+	"animation-iteration-count",
+	"border-image-outset",
+	"border-image-slice",
+	"border-image-width",
+	"box-flex",
+	"box-flex-group",
+	"box-ordinal-group",
+	"column-count",
+	"columns",
+	"flex",
+	"flex-grow",
+	"flex-positive",
+	"flex-shrink",
+	"flex-negative",
+	"flex-order",
+	"grid-row",
+	"grid-row-end",
+	"grid-row-span",
+	"grid-row-start",
+	"grid-column",
+	"grid-column-end",
+	"grid-column-span",
+	"grid-column-start",
+	"font-weight",
+	"line-clamp",
+	"line-height",
+	"opacity",
+	"order",
+	"orphans",
+	"tab-size",
+	"widows",
+	"z-index",
+	"zoom",
+	"fill-opacity",
+	"flood-opacity",
+	"stop-opacity",
+	"stroke-dasharray",
+	"stroke-dashoffset",
+	"stroke-miterlimit",
+	"stroke-opacity",
+	"stroke-width",
+];
 
 export class GlobalStyle {
 	private readonly cache: { [key: string]: string } = {};
@@ -54,7 +96,7 @@ export class GlobalStyle {
 		if (this.sheet) {
 			try {
 				this.sheet.insertRule(rule, this.sheet.cssRules.length);
-			}catch (e){}
+			} catch (e) {}
 		}
 	}
 
@@ -69,7 +111,12 @@ export class GlobalStyle {
 			const className =
 				this.config.prefix + this.rules.length.toString(36);
 
-			const unit = typeof value === "number" && value !== 0 && noAutoPixel.indexOf(styleKey) < 0 ? "px": "";
+			const unit =
+				typeof value === "number" &&
+				value !== 0 &&
+				noAutoPixel.indexOf(styleKey) < 0
+					? "px"
+					: "";
 			const style = `.${className}${childSelector}{${styleKey}:${value}${unit};}`;
 			const rule = mediaQuery ? `${mediaQuery}{${style}}` : style;
 			this.cache[cacheKey] = className;
@@ -173,14 +220,20 @@ export class GlobalStyle {
 			.filter(
 				(key) => typeof style[key] === "number" || Boolean(style[key])
 			)
-			.map((key): string =>
-				this.parseValue(
-					GlobalStyle.cleanText(key),
-					style[key],
-					childSelector,
-					mediaQuery
-				)
+			.map((key) =>
+				key
+					.split(",")
+					.map(GlobalStyle.cleanText)
+					.map((itemKey) =>
+						this.parseValue(
+							itemKey,
+							style[key],
+							childSelector,
+							mediaQuery
+						)
+					)
 			)
+			.reduce((final, item) => [...final, ...item], [])
 			.join(" ")
 			.trim();
 	}
