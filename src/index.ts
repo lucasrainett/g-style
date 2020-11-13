@@ -7,6 +7,7 @@ export interface CssObject {
 export interface IConfig {
 	prefix?: string;
 	nonce?: string;
+	debug?: boolean;
 }
 
 // https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59
@@ -54,6 +55,10 @@ const noAutoPixel = [
 	"stroke-width",
 ];
 
+export function css(style: CssObject){
+	return GlobalStyle.getClassNames(style);
+}
+
 export class GlobalStyle {
 	private readonly cache: { [key: string]: string } = {};
 	private readonly rules: string[] = [];
@@ -71,6 +76,16 @@ export class GlobalStyle {
 			this.sheet = document.head.appendChild(style)
 				.sheet as CSSStyleSheet;
 		}
+	}
+
+	private static instance: GlobalStyle;
+	public static getClassNames(style: CssObject){
+		this.instance = this.instance || new GlobalStyle();
+		return this.instance.getClassNames(style);
+	}
+	public static getFullCss(){
+		this.instance = this.instance || new GlobalStyle();
+		return this.instance.getFullCss();
 	}
 
 	private static getNonceFromMeta() {
@@ -96,7 +111,10 @@ export class GlobalStyle {
 		if (this.sheet) {
 			try {
 				this.sheet.insertRule(rule, this.sheet.cssRules.length);
-			} catch (e) {}
+				this.config.debug && console.log("Rule Inserted:", rule);
+			} catch (e) {
+				this.config.debug && console.error("ERROR: Rule not supported:", rule);
+			}
 		}
 	}
 

@@ -1,4 +1,4 @@
-import { GlobalStyle } from "./index";
+import { GlobalStyle, css } from "./index";
 
 describe("GlobalStyle", () => {
 	const insertRule = jest.fn();
@@ -262,6 +262,36 @@ describe("GlobalStyle", () => {
 				".t2 samp{font-size:1em;}",
 			].join("\n")
 		);
+	});
+
+	it("should support functional programming", () => {
+		const className = GlobalStyle.getClassNames({
+			borderWidth: 20,
+		});
+		expect(className).toEqual("t0");
+		expect(GlobalStyle.getFullCss()).toEqual(".t0{border-width:20px;}");
+	});
+
+	it("should export single function", () => {
+		const className = css({
+			borderWidth: 20,
+		});
+		expect(className).toEqual("t0");
+		expect(GlobalStyle.getFullCss()).toEqual(".t0{border-width:20px;}");
+	});
+
+	it("should support debug", () => {
+		const originalConsole = global.console;
+		(global.console as any) = {
+			log: jest.fn(),
+			error: jest.fn()
+		};
+		const globalStyle = new GlobalStyle({debug: true});
+		globalStyle.getClassNames({
+			"code,kbd, samp": { fontSize: "1em" },
+		});
+		expect(console.log).toHaveBeenNthCalledWith(3, "Rule Inserted:", expect.any(String));
+		global.console = originalConsole;
 	});
 
 	it("should support @keyframes", () => {
