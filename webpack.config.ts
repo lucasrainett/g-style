@@ -2,6 +2,7 @@ import {Configuration} from "webpack";
 
 export default {
 	mode: "production",
+	devtool: "cheap-source-map",
     resolve: {
         extensions: [".ts"],
     },

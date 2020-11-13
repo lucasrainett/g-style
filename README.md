@@ -22,6 +22,9 @@ const className = gStyle.getClassNames({ color: "gold" });
 - Pseudoclasses
 - Nesting
 - No CSS files
+- CSP
+- Run from CDN
+- Auto append "px" (similar to react)
 
 
 ## Install
@@ -143,7 +146,44 @@ Global Style will read the csp nonce from meta tag automatically
 You can optionally provide a nonce when creating the instance
 
 ```js
-const gStyle = new GlobalStyle({nonce:"random-nonce"})
+const gStyle = new GlobalStyle({nonce:"random-nonce"});
+```
+
+### Auto append px to numeric size rules
+```js
+const gStyle = new GlobalStyle();
+const className = gStyle.getClassNames({
+  margin: 10
+})
+
+// will create a margin: 10px
+
+```
+
+
+### CDN
+
+Run from CDN
+
+```html
+<script src="https://unpkg.com/g-style@1.2.1/dist/index.umd.js"></script>
+<script>
+const {GlobalStyle} = GlobalStyle;
+const gStyle = new GlobalStyle();
+</script>
+```
+
+Run from CDN with webpack
+
+```js
+webpack.config.js
+
+export default {
+  ...
+  externals: {"g-style": "GlobalStyle"}
+  ...
+};
+
 ```
 
 

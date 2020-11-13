@@ -8,8 +8,8 @@ describe("GlobalStyle", () => {
 		(document.head.appendChild as jest.Mock).mockReturnValue({
 			sheet: {
 				insertRule,
-				cssRules: [],
-			},
+				cssRules: []
+			}
 		});
 	});
 
@@ -41,8 +41,8 @@ describe("GlobalStyle", () => {
 		const className = globalStyle.getClassNames({
 			color: "gold",
 			"&:hover": {
-				color: "black",
-			},
+				color: "black"
+			}
 		});
 
 		expect(className).toEqual("t0 t1");
@@ -56,8 +56,8 @@ describe("GlobalStyle", () => {
 		globalStyle.getClassNames({
 			color: "gold",
 			"@media print": {
-				color: "black",
-			},
+				color: "black"
+			}
 		});
 		expect(globalStyle.getFullCss()).toEqual(
 			[".t0{color:gold;}", "@media print{.t1{color:black;}}"].join("\n")
@@ -70,9 +70,9 @@ describe("GlobalStyle", () => {
 			color: "gold",
 			"@media screen": {
 				"&:hover": {
-					color: "black",
-				},
-			},
+					color: "black"
+				}
+			}
 		});
 		expect(globalStyle.getFullCss()).toEqual(
 			[".t0{color:gold;}", "@media screen{.t1:hover{color:black;}}"].join(
@@ -84,7 +84,7 @@ describe("GlobalStyle", () => {
 	it("should ignore null values", () => {
 		const globalStyle = new GlobalStyle();
 		const classNames = globalStyle.getClassNames({
-			color: null,
+			color: null
 		} as any);
 		expect(classNames).toEqual("");
 		expect(globalStyle.getFullCss()).toEqual("");
@@ -101,8 +101,8 @@ describe("GlobalStyle", () => {
 		const className = globalStyle.getClassNames({
 			color: "gold",
 			".button": {
-				color: "black",
-			},
+				color: "black"
+			}
 		});
 
 		expect(className).toEqual("t0 t1");
@@ -116,8 +116,8 @@ describe("GlobalStyle", () => {
 		const className = globalStyle.getClassNames({
 			color: "gold",
 			"&.button": {
-				color: "black",
-			},
+				color: "black"
+			}
 		});
 
 		expect(className).toEqual("t0 t1");
@@ -129,7 +129,7 @@ describe("GlobalStyle", () => {
 	it("should handles zero value", () => {
 		const globalStyle = new GlobalStyle();
 		const className = globalStyle.getClassNames({
-			margin: 0,
+			margin: 0
 		});
 
 		expect(className).toEqual("t0");
@@ -141,11 +141,11 @@ describe("GlobalStyle", () => {
 		const globalStyle2 = new GlobalStyle({ prefix: "test2" });
 
 		const className1 = globalStyle1.getClassNames({
-			color: "gold",
+			color: "gold"
 		});
 
 		const className2 = globalStyle2.getClassNames({
-			color: "gold",
+			color: "gold"
 		});
 
 		expect(className1).toEqual("test10");
@@ -160,14 +160,14 @@ describe("GlobalStyle", () => {
 		const className = globalStyle.getClassNames({
 			color: "gold",
 			".box": {
-				backgroundColor: "red",
+				backgroundColor: "red"
 			},
 			"&.button": {
-				color: "black",
+				color: "black"
 			},
 			"@media print": {
-				border: "1px solid #ccc",
-			},
+				border: "1px solid #ccc"
+			}
 		});
 
 		expect(className).toEqual("t0 t1 t2 t3");
@@ -176,7 +176,7 @@ describe("GlobalStyle", () => {
 				".t0{color:gold;}",
 				".t1 .box{background-color:red;}",
 				".t2.button{color:black;}",
-				"@media print{.t3{border:1px solid #ccc;}}",
+				"@media print{.t3{border:1px solid #ccc;}}"
 			].join("\n")
 		);
 	});
@@ -187,11 +187,11 @@ describe("GlobalStyle", () => {
 			color: "gold",
 			display: ["flex", "-webkit-flex"],
 			"@media print": {
-				display: ["flex", "-ms-flex"],
+				display: ["flex", "-ms-flex"]
 			},
 			"&.button": {
-				display: ["flex", "-moz-flex"],
-			},
+				display: ["flex", "-moz-flex"]
+			}
 		});
 
 		expect(className).toEqual("t0 t1 t2 t3 t4 t5 t6");
@@ -203,7 +203,7 @@ describe("GlobalStyle", () => {
 				".t5.button{display:flex;}",
 				".t6.button{display:-moz-flex;}",
 				"@media print{.t3{display:flex;}}",
-				"@media print{.t4{display:-ms-flex;}}",
+				"@media print{.t4{display:-ms-flex;}}"
 			].join("\n")
 		);
 	});
@@ -212,12 +212,12 @@ describe("GlobalStyle", () => {
 		const globalStyle = new GlobalStyle();
 		const className = globalStyle.getClassNames({
 			test: ["string", 10],
-			test2: 11,
+			test2: 11
 		});
 
 		expect(className).toEqual("t0 t1 t2");
 		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{test:string;}", ".t1{test:10;}", ".t2{test2:11;}"].join("\n")
+			[".t0{test:string;}", ".t1{test:10px;}", ".t2{test2:11px;}"].join("\n")
 		);
 	});
 
@@ -253,21 +253,82 @@ describe("GlobalStyle", () => {
 			"@keyframes spin": {
 				"0%": {
 					transform: "rotate(0deg)",
-					border: "1px",
+					border: "1px"
 				},
 				"100%": {
 					transform: "rotate(360deg)",
-					border: "2px",
-				},
-			},
+					border: "2px"
+				}
+			}
 		});
 
 		expect(className).toEqual("t0");
 		expect(globalStyle.getFullCss()).toEqual(
 			[
 				".t0{animation:spin 5s infinite;}",
-				"@keyframes spin{0%{transform:rotate(0deg);border:1px;}100%{transform:rotate(360deg);border:2px;}}",
+				"@keyframes spin{0%{transform:rotate(0deg);border:1px;}100%{transform:rotate(360deg);border:2px;}}"
 			].join("\n")
 		);
+	});
+
+
+	const noAutoPixel = ["animationIterationCount", "borderImageOutset", "borderImageSlice", "borderImageWidth", "boxFlex", "boxFlexGroup", "boxOrdinalGroup", "columnCount", "columns", "flex", "flexGrow", "flexPositive", "flexShrink", "flexNegative", "flexOrder", "gridRow", "gridRowEnd", "gridRowSpan", "gridRowStart", "gridColumn", "gridColumnEnd", "gridColumnSpan", "gridColumnStart", "fontWeight", "lineClamp", "lineHeight", "opacity", "order", "orphans", "tabSize", "widows", "zIndex", "zoom", "fillOpacity", "floodOpacity", "stopOpacity", "strokeDasharray", "strokeDashoffset", "strokeMiterlimit", "strokeOpacity", "strokeWidth"];
+	const exampleOfAutoPixel = ["width", "height", "margin", "padding"];
+
+
+	it("should append px to number properties that are size related", () => {
+		const style = [...exampleOfAutoPixel, ...noAutoPixel].reduce((final, item) => ({ ...final, [item]: 10 }), {});
+
+		const globalStyle = new GlobalStyle();
+		globalStyle.getClassNames(style);
+
+		expect(globalStyle.getFullCss()).toEqual([
+			".t0{width:10px;}",
+			".t10{zoom:10;}",
+			".t11{fill-opacity:10;}",
+			".t12{flood-opacity:10;}",
+			".t13{stop-opacity:10;}",
+			".t14{stroke-dasharray:10;}",
+			".t15{stroke-dashoffset:10;}",
+			".t16{stroke-miterlimit:10;}",
+			".t17{stroke-opacity:10;}",
+			".t18{stroke-width:10;}",
+			".t1{height:10px;}",
+			".t2{margin:10px;}",
+			".t3{padding:10px;}",
+			".t4{animation-iteration-count:10;}",
+			".t5{border-image-outset:10;}",
+			".t6{border-image-slice:10;}",
+			".t7{border-image-width:10;}",
+			".t8{box-flex:10;}",
+			".t9{box-flex-group:10;}",
+			".ta{box-ordinal-group:10;}",
+			".tb{column-count:10;}",
+			".tc{columns:10;}",
+			".td{flex:10;}",
+			".te{flex-grow:10;}",
+			".tf{flex-positive:10;}",
+			".tg{flex-shrink:10;}",
+			".th{flex-negative:10;}",
+			".ti{flex-order:10;}",
+			".tj{grid-row:10;}",
+			".tk{grid-row-end:10;}",
+			".tl{grid-row-span:10;}",
+			".tm{grid-row-start:10;}",
+			".tn{grid-column:10;}",
+			".to{grid-column-end:10;}",
+			".tp{grid-column-span:10;}",
+			".tq{grid-column-start:10;}",
+			".tr{font-weight:10;}",
+			".ts{line-clamp:10;}",
+			".tt{line-height:10;}",
+			".tu{opacity:10;}",
+			".tv{order:10;}",
+			".tw{orphans:10;}",
+			".tx{tab-size:10;}",
+			".ty{widows:10;}",
+			".tz{z-index:10;}"
+		].join("\n"));
+
 	});
 });
