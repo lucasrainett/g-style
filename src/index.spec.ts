@@ -19,10 +19,42 @@ describe("GlobalStyle", () => {
 		expect(classNames).toEqual(expect.any(String));
 	});
 
-	it("should insert style on document", () => {
+	it("should insert style tag on document", () => {
 		const globalStyle = new GlobalStyle();
 		globalStyle.getClassNames({ color: "gold" });
 		expect(globalStyle.getFullCss()).toEqual(".t0{color:gold;}");
+		expect(document.head.appendChild).toHaveBeenCalled();
+	});
+
+	it("should insert style rules on document", () => {
+		const globalStyle = new GlobalStyle();
+		globalStyle.getClassNames({ color: "gold" });
+		expect(globalStyle.getFullCss()).toEqual(".t0{color:gold;}");
+		expect(insertRule).toHaveBeenCalledWith(".t0{color:gold;}", 0);
+	});
+
+	it("should NOT insert style tag on document when memoryOnly is set to true", () => {
+		const globalStyle = new GlobalStyle({ memoryOnly: true });
+		globalStyle.getClassNames({ color: "gold" });
+		expect(globalStyle.getFullCss()).toEqual(".t0{color:gold;}");
+		expect(document.head.appendChild).not.toHaveBeenCalled();
+	});
+
+	it("should NOT insert style rules on document when memoryOnly is set to true", () => {
+		const globalStyle = new GlobalStyle({ memoryOnly: true });
+		globalStyle.getClassNames({ color: "gold" });
+		expect(globalStyle.getFullCss()).toEqual(".t0{color:gold;}");
+		expect(insertRule).not.toHaveBeenCalled();
+	});
+
+	it("should handle error when inserting rules", () => {
+		insertRule.mockImplementation(() => {
+			throw new Error();
+		});
+		const globalStyle = new GlobalStyle({ debug: true });
+		globalStyle.getClassNames({ color: "gold" });
+		expect(globalStyle.getFullCss()).toEqual(".t0{color:gold;}");
+		expect(insertRule).toHaveBeenCalled();
 	});
 
 	it("should deduplicate rules", () => {
@@ -284,13 +316,17 @@ describe("GlobalStyle", () => {
 		const originalConsole = global.console;
 		(global.console as any) = {
 			log: jest.fn(),
-			error: jest.fn()
+			error: jest.fn(),
 		};
-		const globalStyle = new GlobalStyle({debug: true});
+		const globalStyle = new GlobalStyle({ debug: true });
 		globalStyle.getClassNames({
 			"code,kbd, samp": { fontSize: "1em" },
 		});
-		expect(console.log).toHaveBeenNthCalledWith(3, "Rule Inserted:", expect.any(String));
+		expect(console.log).toHaveBeenNthCalledWith(
+			3,
+			"Rule Inserted:",
+			expect.any(String)
+		);
 		global.console = originalConsole;
 	});
 

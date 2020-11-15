@@ -201,6 +201,11 @@ Will create all style rules
 .t2 samp{font-size:1em;}
 ```
 
+### Memory Only
+This option will stop the style/css to be injected in the page, useful if you are going to use the style in Iframes/WebComponents etc...
+```js
+const globalStyle = new GlobalStyle({memoryOnly: true});
+```
 
 ### Security
 
@@ -235,7 +240,16 @@ const className = globalStyle.getClassNames({
 
 Create a new globalStyle instance
 
-### `const globalStyle = new GlobalStyle({prefix:"prefix", nonce:"random", debug: true})`
+### `const globalStyle = new GlobalStyle({...options})`
+All options
+```json
+{
+prefix:"prefix",
+nonce:"random",
+debug: true,
+memoryOnly: true
+}
+```
 
 Create a new globalStyle instance with custom prefix
 

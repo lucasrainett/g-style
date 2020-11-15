@@ -8,6 +8,7 @@ export interface IConfig {
 	prefix?: string;
 	nonce?: string;
 	debug?: boolean;
+	memoryOnly?: boolean;
 }
 
 // https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59
@@ -55,7 +56,7 @@ const noAutoPixel = [
 	"stroke-width",
 ];
 
-export function css(style: CssObject){
+export function css(style: CssObject) {
 	return GlobalStyle.getClassNames(style);
 }
 
@@ -67,7 +68,7 @@ export class GlobalStyle {
 	constructor(private config: IConfig = {}) {
 		this.config.prefix = this.config.prefix || "t";
 
-		if (typeof document !== "undefined") {
+		if (!this.config.memoryOnly && typeof document !== "undefined") {
 			const style = document.createElement("style");
 			const nonce = this.config.nonce || GlobalStyle.getNonceFromMeta();
 			if (nonce) {
@@ -79,11 +80,11 @@ export class GlobalStyle {
 	}
 
 	private static instance: GlobalStyle;
-	public static getClassNames(style: CssObject){
+	public static getClassNames(style: CssObject) {
 		this.instance = this.instance || new GlobalStyle();
 		return this.instance.getClassNames(style);
 	}
-	public static getFullCss(){
+	public static getFullCss() {
 		this.instance = this.instance || new GlobalStyle();
 		return this.instance.getFullCss();
 	}
@@ -113,7 +114,8 @@ export class GlobalStyle {
 				this.sheet.insertRule(rule, this.sheet.cssRules.length);
 				this.config.debug && console.log("Rule Inserted:", rule);
 			} catch (e) {
-				this.config.debug && console.error("ERROR: Rule not supported:", rule);
+				this.config.debug &&
+					console.error("ERROR: Rule not supported:", rule);
 			}
 		}
 	}
