@@ -1,3 +1,5 @@
+import { cleanText, wrap, rule, getMetaAttribute, flat, isValidCssValue } from "./util";
+
 export type CssValue = string | number | Array<string | number> | CssObject;
 
 export interface CssObject {
@@ -5,10 +7,12 @@ export interface CssObject {
 }
 
 export interface IConfig {
-	prefix?: string;
+	prefix: string;
 	nonce?: string;
-	debug?: boolean;
-	memoryOnly?: boolean;
+	nonceMetaProperty: string;
+	nonceMetaAttribute: string;
+	debug: boolean;
+	memoryOnly: boolean;
 }
 
 // https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59
@@ -53,7 +57,7 @@ const noAutoPixel = [
 	"stroke-dashoffset",
 	"stroke-miterlimit",
 	"stroke-opacity",
-	"stroke-width",
+	"stroke-width"
 ];
 
 export function css(style: CssObject) {
@@ -64,15 +68,23 @@ export class GlobalStyle {
 	private readonly cache: { [key: string]: string } = {};
 	private readonly rules: string[] = [];
 	private readonly sheet?: CSSStyleSheet;
+	private config: IConfig;
 
-	constructor(private config: IConfig = {}) {
-		this.config.prefix = this.config.prefix || "t";
+	constructor(config: Partial<IConfig> = {}) {
+		const { memoryOnly, nonce, nonceMetaProperty, nonceMetaAttribute } = this.config = {
+			prefix: "t",
+			nonceMetaProperty: "csp-nonce",
+			nonceMetaAttribute: "content",
+			debug: false,
+			memoryOnly: false,
+			...config
+		};
 
-		if (!this.config.memoryOnly && typeof document !== "undefined") {
+		if (!memoryOnly && typeof document !== "undefined") {
 			const style = document.createElement("style");
-			const nonce = this.config.nonce || GlobalStyle.getNonceFromMeta();
-			if (nonce) {
-				style.setAttribute("nonce", nonce);
+			const finalNonce = nonce || getMetaAttribute(nonceMetaProperty, nonceMetaAttribute);
+			if (finalNonce) {
+				style.setAttribute("nonce", finalNonce);
 			}
 			this.sheet = document.head.appendChild(style)
 				.sheet as CSSStyleSheet;
@@ -80,31 +92,15 @@ export class GlobalStyle {
 	}
 
 	private static instance: GlobalStyle;
+
 	public static getClassNames(style: CssObject) {
 		this.instance = this.instance || new GlobalStyle();
 		return this.instance.getClassNames(style);
 	}
+
 	public static getFullCss() {
 		this.instance = this.instance || new GlobalStyle();
 		return this.instance.getFullCss();
-	}
-
-	private static getNonceFromMeta() {
-		const metaCsp = document.querySelector("meta[property=csp-nonce]");
-		if (metaCsp) {
-			const nonce = metaCsp.getAttribute("content");
-			if (nonce) {
-				return nonce;
-			}
-		}
-		return undefined;
-	}
-
-	private static cleanText(text: string) {
-		return text
-			.trim()
-			.replace(/[A-Z]|^ms/g, "-$&")
-			.toLowerCase();
 	}
 
 	private insertRule(rule: string) {
@@ -115,14 +111,14 @@ export class GlobalStyle {
 				this.config.debug && console.log("Rule Inserted:", rule);
 			} catch (e) {
 				this.config.debug &&
-					console.error("ERROR: Rule not supported:", rule);
+				console.error("ERROR: Rule not supported:", rule);
 			}
 		}
 	}
 
 	private parseStringValue(
 		styleKey: string,
-		value: string | number,
+		value: string,
 		childSelector: string = "",
 		mediaQuery: string = ""
 	) {
@@ -131,21 +127,31 @@ export class GlobalStyle {
 			const className =
 				this.config.prefix + this.rules.length.toString(36);
 
-			const unit =
-				typeof value === "number" &&
-				value !== 0 &&
-				noAutoPixel.indexOf(styleKey) < 0
-					? "px"
-					: "";
-			const style = `.${className}${childSelector}{${styleKey}:${value}${unit};}`;
-			const rule = mediaQuery ? `${mediaQuery}{${style}}` : style;
+			const style = wrap(
+				`.${className}${childSelector}`,
+				rule(styleKey, value)
+			);
+			this.insertRule(mediaQuery ? wrap(mediaQuery, style) : style);
 			this.cache[cacheKey] = className;
-			this.insertRule(rule);
 		}
 		return this.cache[cacheKey];
 	}
 
-	private parseKeyFrame(
+	private parseNumberValue(
+		styleKey: string,
+		value: number,
+		childSelector: string = "",
+		mediaQuery: string = ""
+	) {
+		return this.parseStringValue(
+			styleKey,
+			`${value}${noAutoPixel.indexOf(styleKey) < 0 ? "px" : ""}`,
+			childSelector,
+			mediaQuery
+		);
+	}
+
+	private parseKeyframe(
 		keyframeKey: string,
 		keyframeObject: CssObject & any
 	) {
@@ -153,76 +159,103 @@ export class GlobalStyle {
 			.map((keyframeStageKey) => {
 				const keyframeStage = keyframeObject[keyframeStageKey];
 				const entryValue = Object.keys(keyframeStage)
-					.map(GlobalStyle.cleanText)
-					.map(
-						(keyframeRuleKey) =>
-							`${keyframeRuleKey}:${keyframeStage[keyframeRuleKey]};`
+					.map(cleanText)
+					.map((keyframeRuleKey) =>
+						rule(keyframeRuleKey, keyframeStage[keyframeRuleKey])
 					)
 					.join("");
-				return `${keyframeStageKey}{${entryValue}}`;
+				return wrap(keyframeStageKey, entryValue);
 			})
 			.join("");
-		const rule = `${keyframeKey}{${keyframeValue}}`;
-		if (!this.cache[rule]) {
-			this.cache[rule] = "cache";
-			this.insertRule(rule);
+		const formattedRule = wrap(keyframeKey, keyframeValue);
+		if (!this.cache[formattedRule]) {
+			this.cache[formattedRule] = "cache";
+			this.insertRule(formattedRule);
 		}
 		return "";
 	}
 
-	private parseObjectValue(
+	private parseCssObjectValue(
 		styleKey: string,
 		value: CssObject,
 		childSelector: string = "",
 		mediaQuery: string = ""
-	) {
+	): string[] {
 		if (styleKey.indexOf("@keyframes") === 0) {
-			return this.parseKeyFrame(styleKey, value);
+			this.parseKeyframe(styleKey, value);
+			return [];
 		} else if (styleKey.indexOf("@media") === 0) {
 			return this.parseCssObject(value, childSelector, styleKey);
 		} else {
-			const formattedChildKey =
-				styleKey.indexOf("&") === 0
-					? styleKey.substr(1)
-					: " " + styleKey;
 			return this.parseCssObject(
 				value,
-				childSelector + formattedChildKey,
+				childSelector +
+				(styleKey.indexOf("&") === 0
+					? styleKey.substr(1)
+					: " " + styleKey),
 				mediaQuery
 			);
 		}
 	}
 
-	private parseValue(
+	private parseSingleValue(
 		styleKey: string,
-		value: CssValue,
+		value: string | number,
 		childSelector: string = "",
 		mediaQuery: string = ""
-	): string {
-		if (typeof value === "string" || typeof value === "number") {
+	) {
+		if (typeof value === "number") {
+			return this.parseNumberValue(
+				styleKey,
+				value,
+				childSelector,
+				mediaQuery
+			);
+		} else {
 			return this.parseStringValue(
 				styleKey,
 				value,
 				childSelector,
 				mediaQuery
 			);
+		}
+	}
+
+	private parseArrayValue(
+		styleKey: string,
+		values: Array<string | number>,
+		childSelector: string = "",
+		mediaQuery: string = ""
+	) {
+		return values.map((value) =>
+			this.parseSingleValue(styleKey, value, childSelector, mediaQuery)
+		);
+	}
+
+	private parseCssValue(
+		styleKey: string,
+		value: CssValue,
+		childSelector: string = "",
+		mediaQuery: string = ""
+	): string[] {
+		if (typeof value === "number" || typeof value === "string") {
+			return [
+				this.parseSingleValue(
+					styleKey,
+					value,
+					childSelector,
+					mediaQuery
+				)
+			];
 		} else if (Array.isArray(value)) {
-			return value
-				.filter(
-					(val) => typeof val === "string" || typeof val === "number"
-				)
-				.map((val) =>
-					this.parseStringValue(
-						styleKey,
-						val,
-						childSelector,
-						mediaQuery
-					)
-				)
-				.join(" ")
-				.trim();
+			return this.parseArrayValue(
+				styleKey,
+				value,
+				childSelector,
+				mediaQuery
+			);
 		} else {
-			return this.parseObjectValue(
+			return this.parseCssObjectValue(
 				styleKey,
 				value,
 				childSelector,
@@ -231,35 +264,47 @@ export class GlobalStyle {
 		}
 	}
 
+	private parseCssObjectEntry(
+		styleKey: string,
+		value: CssValue,
+		childSelector: string = "",
+		mediaQuery: string = ""
+	): string[] {
+		return flat(styleKey
+			.split(",")
+			.map(cleanText)
+			.map((styleKeyItem) =>
+				this.parseCssValue(
+					styleKeyItem,
+					value,
+					childSelector,
+					mediaQuery
+				)
+			));
+	}
+
 	private parseCssObject(
 		style: CssObject,
 		childSelector: string = "",
 		mediaQuery: string = ""
-	): string {
-		return Object.keys(style)
+	): string[] {
+		return flat(Object.keys(style)
 			.filter(
-				(key) => typeof style[key] === "number" || Boolean(style[key])
+				(styleKey) => isValidCssValue(style[styleKey])
 			)
-			.map((key) =>
-				key
-					.split(",")
-					.map(GlobalStyle.cleanText)
-					.map((itemKey) =>
-						this.parseValue(
-							itemKey,
-							style[key],
-							childSelector,
-							mediaQuery
-						)
-					)
+			.map((styleKey) =>
+				this.parseCssObjectEntry(
+					styleKey,
+					style[styleKey],
+					childSelector,
+					mediaQuery
+				)
 			)
-			.reduce((final, item) => [...final, ...item], [])
-			.join(" ")
-			.trim();
+		);
 	}
 
 	public getClassNames(style: CssObject) {
-		return this.parseCssObject(style);
+		return this.parseCssObject(style).join(" ").trim();
 	}
 
 	public getFullCss() {
