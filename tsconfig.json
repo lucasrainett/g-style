@@ -3,6 +3,7 @@
     "declaration": true,
     "outDir": "dist",
     "target": "es5",
+    "lib": ["ES2019.Array","DOM"],
     "sourceMap": true,
     "removeComments": true,
     "importHelpers": false,

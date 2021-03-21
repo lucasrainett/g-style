@@ -2,11 +2,11 @@ import {Configuration} from "webpack";
 
 export default {
 	mode: "production",
-	devtool: "cheap-source-map",
+	devtool: "source-map",
     resolve: {
-        extensions: [".ts"],
+        extensions: [".js",".ts"],
     },
-	target: "es5",
+	target:["es5", "web"],
     output: {
         libraryTarget: "umd",
 		library: "GlobalStyle",

@@ -265,21 +265,6 @@ describe("GlobalStyle", () => {
 		expect(document.head.appendChild).toHaveBeenCalledWith(expectedStyle);
 	});
 
-	it("should use nonce from meta tag", () => {
-		const cspMeta = document.createElement("meta");
-		cspMeta.setAttribute("property", "csp-nonce");
-		cspMeta.setAttribute("content", "random-nonce");
-		(document.querySelector as jest.Mock).mockReturnValue(cspMeta);
-
-		const globalStyle = new GlobalStyle();
-		globalStyle.getClassNames({ border: "1px" });
-
-		const expectedStyle = document.createElement("style");
-		expectedStyle.setAttribute("nonce", "random-nonce");
-
-		expect(document.head.appendChild).toHaveBeenCalledWith(expectedStyle);
-	});
-
 	it("should support comma separated keys", () => {
 		const globalStyle = new GlobalStyle();
 		const className = globalStyle.getClassNames({
@@ -353,6 +338,30 @@ describe("GlobalStyle", () => {
 				"@keyframes spin{0%{transform:rotate(0deg);border:1px;}100%{transform:rotate(360deg);border:2px;}}",
 			].join("\n")
 		);
+	});
+
+	it("should cache keyframes", () => {
+		const globalStyle = new GlobalStyle();
+		const keyframe = {
+			"@keyframes spin": {
+				"0%": {
+					transform: "rotate(0deg)",
+					border: "1px",
+				},
+				"100%": {
+					transform: "rotate(360deg)",
+					border: "2px",
+				},
+			},
+		};
+		const className1 = globalStyle.getClassNames(keyframe);
+		const className2 = globalStyle.getClassNames(keyframe);
+		expect(className1).toEqual(className2);
+	});
+
+	it("should return empty when getFullCss is called but not rules were provided", () => {
+		(GlobalStyle as any).instance = undefined;
+		expect(GlobalStyle.getFullCss()).toEqual("");
 	});
 
 	const noAutoPixel = [

@@ -1,74 +1,22 @@
-export type CssValue = string | number | Array<string | number> | CssObject;
+import "array-flat-polyfill";
 
-export interface CssObject {
-	[key: string]: CssValue;
-}
+import { Context, CssObject, CssRule, CssValue, IConfig } from "./types";
 
-export interface IConfig {
-	prefix?: string;
-	nonce?: string;
-	debug?: boolean;
-	memoryOnly?: boolean;
-}
+import {
+	formatChildKey,
+	formatClassName,
+	formatCssRule,
+	formatPxUnit,
+	wrapCssRule,
+	ObjectEntriesShim,
+	getNonceFromMeta,
+	insertRule,
+	processStringValue,
+} from "./util";
 
-// https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59
-const noAutoPixel = [
-	"animation-iteration-count",
-	"border-image-outset",
-	"border-image-slice",
-	"border-image-width",
-	"box-flex",
-	"box-flex-group",
-	"box-ordinal-group",
-	"column-count",
-	"columns",
-	"flex",
-	"flex-grow",
-	"flex-positive",
-	"flex-shrink",
-	"flex-negative",
-	"flex-order",
-	"-ms-flex",
-	"-ms-flex-grow",
-	"-ms-flex-positive",
-	"-ms-flex-shrink",
-	"-ms-flex-negative",
-	"-ms-flex-order",
-	"grid-row",
-	"grid-row-end",
-	"grid-row-span",
-	"grid-row-start",
-	"grid-column",
-	"grid-column-end",
-	"grid-column-span",
-	"grid-column-start",
-	"-ms-grid-row",
-	"-ms-grid-row-end",
-	"-ms-grid-row-span",
-	"-ms-grid-row-start",
-	"-ms-grid-column",
-	"-ms-grid-column-end",
-	"-ms-grid-column-span",
-	"-ms-grid-column-start",
-	"font-weight",
-	"line-clamp",
-	"line-height",
-	"opacity",
-	"order",
-	"orphans",
-	"tab-size",
-	"widows",
-	"z-index",
-	"zoom",
-	"fill-opacity",
-	"flood-opacity",
-	"stop-opacity",
-	"stroke-dasharray",
-	"stroke-dashoffset",
-	"stroke-miterlimit",
-	"stroke-opacity",
-	"stroke-width",
-];
+export { CssObject, IConfig };
+
+ObjectEntriesShim();
 
 export function css(style: CssObject) {
 	return GlobalStyle.getClassNames(style);
@@ -84,7 +32,7 @@ export class GlobalStyle {
 
 		if (!this.config.memoryOnly && typeof document !== "undefined") {
 			const style = document.createElement("style");
-			const nonce = this.config.nonce || GlobalStyle.getNonceFromMeta();
+			const nonce = this.config.nonce || getNonceFromMeta();
 			if (nonce) {
 				style.setAttribute("nonce", nonce);
 			}
@@ -94,186 +42,145 @@ export class GlobalStyle {
 	}
 
 	private static instance: GlobalStyle;
+
 	public static getClassNames(style: CssObject) {
 		this.instance = this.instance || new GlobalStyle();
 		return this.instance.getClassNames(style);
 	}
+
 	public static getFullCss() {
 		this.instance = this.instance || new GlobalStyle();
 		return this.instance.getFullCss();
 	}
 
-	private static getNonceFromMeta() {
-		const metaCsp = document.querySelector("meta[property=csp-nonce]");
-		if (metaCsp) {
-			const nonce = metaCsp.getAttribute("content");
-			if (nonce) {
-				return nonce;
+	private parseSingleValue({
+		value,
+		key,
+		...rest
+	}: CssRule<string | number>) {
+		return processStringValue(
+			{
+				value:
+					typeof value === "number"
+						? formatPxUnit(key, value)
+						: value,
+				key,
+				...rest,
+			},
+			{
+				cache: this.cache,
+				rules: this.rules,
+				config: this.config,
+				sheet: this.sheet,
 			}
-		}
-		return undefined;
+		);
 	}
 
-	private static cleanText(text: string) {
-		return text
-			.trim()
-			.replace(/[A-Z]|^ms/g, "-$&")
-			.toLowerCase();
-	}
-
-	private insertRule(rule: string) {
-		this.rules.push(rule);
-		if (this.sheet) {
-			try {
-				this.sheet.insertRule(rule, this.sheet.cssRules.length);
-				this.config.debug && console.log("Rule Inserted:", rule);
-			} catch (e) {
-				this.config.debug &&
-					console.error("ERROR: Rule not supported:", rule);
-			}
-		}
-	}
-
-	private parseStringValue(
-		styleKey: string,
-		value: string | number,
-		childSelector: string = "",
-		mediaQuery: string = ""
-	) {
-		const cacheKey = styleKey + value + childSelector + mediaQuery;
-		if (!this.cache[cacheKey]) {
-			const className =
-				this.config.prefix + this.rules.length.toString(36);
-
-			const unit =
-				typeof value === "number" &&
-				value !== 0 &&
-				noAutoPixel.indexOf(styleKey) < 0
-					? "px"
-					: "";
-			const style = `.${className}${childSelector}{${styleKey}:${value}${unit};}`;
-			const rule = mediaQuery ? `${mediaQuery}{${style}}` : style;
-			this.cache[cacheKey] = className;
-			this.insertRule(rule);
-		}
-		return this.cache[cacheKey];
+	private parseArrayValue({
+		value,
+		...rest
+	}: CssRule<Array<string | number>>) {
+		return value
+			.filter((val) => typeof val === "string" || typeof val === "number")
+			.map((value) => this.parseSingleValue({ value, ...rest }));
 	}
 
 	private parseKeyFrame(
 		keyframeKey: string,
-		keyframeObject: CssObject & any
-	) {
-		const keyframeValue = Object.keys(keyframeObject)
-			.map((keyframeStageKey) => {
-				const keyframeStage = keyframeObject[keyframeStageKey];
-				const entryValue = Object.keys(keyframeStage)
-					.map(GlobalStyle.cleanText)
-					.map(
-						(keyframeRuleKey) =>
-							`${keyframeRuleKey}:${keyframeStage[keyframeRuleKey]};`
+		keyframeObject: CssObject
+	): void {
+		const rule = wrapCssRule(
+			keyframeKey,
+			Object.entries(keyframeObject)
+				.map(([stageKey, stageContent]) =>
+					wrapCssRule(
+						stageKey,
+						Object.entries(stageContent)
+							.map(([stageRuleKey, stageRuleValue]) =>
+								formatCssRule(
+									formatClassName(stageRuleKey),
+									formatPxUnit(stageRuleKey, stageRuleValue)
+								)
+							)
+							.join("")
 					)
-					.join("");
-				return `${keyframeStageKey}{${entryValue}}`;
-			})
-			.join("");
-		const rule = `${keyframeKey}{${keyframeValue}}`;
-		if (!this.cache[rule]) {
-			this.cache[rule] = "cache";
-			this.insertRule(rule);
-		}
-		return "";
+				)
+				.join("")
+		);
+		this.cache[rule] =
+			this.cache[rule] ||
+			(() => {
+				insertRule(this.rules, rule, !!this.config.debug, this.sheet);
+				return "cache";
+			})();
 	}
 
-	private parseObjectValue(
-		styleKey: string,
-		value: CssObject,
-		childSelector: string = "",
-		mediaQuery: string = ""
-	) {
-		if (styleKey.indexOf("@keyframes") === 0) {
-			return this.parseKeyFrame(styleKey, value);
-		} else if (styleKey.indexOf("@media") === 0) {
-			return this.parseCssObject(value, childSelector, styleKey);
+	private parseObjectValue({
+		key,
+		value,
+		childSelectors,
+		mediaQuery,
+	}: CssRule<CssObject>) {
+		if (key.indexOf("@keyframes") === 0) {
+			this.parseKeyFrame(key, value);
+			return [];
+		} else if (key.indexOf("@media") === 0) {
+			return this.parseCssObject(value, childSelectors, key);
 		} else {
-			const formattedChildKey =
-				styleKey.indexOf("&") === 0
-					? styleKey.substr(1)
-					: " " + styleKey;
 			return this.parseCssObject(
 				value,
-				childSelector + formattedChildKey,
+				[...childSelectors, formatChildKey(key)],
 				mediaQuery
 			);
 		}
 	}
 
-	private parseValue(
-		styleKey: string,
-		value: CssValue,
-		childSelector: string = "",
-		mediaQuery: string = ""
-	): string {
-		if (typeof value === "string" || typeof value === "number") {
-			return this.parseStringValue(
-				styleKey,
+	private parseValue({ value, ...rest }: CssRule<CssValue>) {
+		if (typeof value === "object" && !Array.isArray(value)) {
+			return this.parseObjectValue({
 				value,
-				childSelector,
-				mediaQuery
-			);
-		} else if (Array.isArray(value)) {
-			return value
-				.filter(
-					(val) => typeof val === "string" || typeof val === "number"
-				)
-				.map((val) =>
-					this.parseStringValue(
-						styleKey,
-						val,
-						childSelector,
-						mediaQuery
-					)
-				)
-				.join(" ")
-				.trim();
+				...rest,
+			});
 		} else {
-			return this.parseObjectValue(
-				styleKey,
-				value,
-				childSelector,
-				mediaQuery
-			);
+			return this.parseArrayValue({
+				value: Array.isArray(value) ? value : [value],
+				...rest,
+			});
 		}
+	}
+
+	private parseMultiKeyValue({ key, ...rest }: CssRule<CssValue>) {
+		return key
+			.split(",")
+			.map(formatClassName)
+			.map((key) =>
+				this.parseValue({
+					key,
+					...rest,
+				})
+			);
 	}
 
 	private parseCssObject(
 		style: CssObject,
-		childSelector: string = "",
-		mediaQuery: string = ""
-	): string {
-		return Object.keys(style)
-			.filter(
-				(key) => typeof style[key] === "number" || Boolean(style[key])
+		childSelectors: string[],
+		mediaQuery?: string
+	): string[] {
+		return Object.entries(style)
+			.filter(([, value]) => typeof value === "number" || Boolean(value))
+			.map(([key, value]) =>
+				this.parseMultiKeyValue({
+					key,
+					value,
+					childSelectors,
+					mediaQuery,
+				})
 			)
-			.map((key) =>
-				key
-					.split(",")
-					.map(GlobalStyle.cleanText)
-					.map((itemKey) =>
-						this.parseValue(
-							itemKey,
-							style[key],
-							childSelector,
-							mediaQuery
-						)
-					)
-			)
-			.reduce((final, item) => [...final, ...item], [])
-			.join(" ")
-			.trim();
+			.flat(3);
 	}
 
-	public getClassNames(style: CssObject) {
-		return this.parseCssObject(style);
+	public getClassNames(style: CssObject): string {
+		return this.parseCssObject(style, []).join(" ").trim();
 	}
 
 	public getFullCss() {
