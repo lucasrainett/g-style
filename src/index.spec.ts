@@ -107,9 +107,7 @@ describe("GlobalStyle", () => {
 			},
 		});
 		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{color:gold;}", "@media screen{.t1:hover{color:black;}}"].join(
-				"\n"
-			)
+			[".t0{color:gold;}", "@media screen{.t1:hover{color:black;}}"].join("\n")
 		);
 	});
 
@@ -249,9 +247,7 @@ describe("GlobalStyle", () => {
 
 		expect(className).toEqual("t0 t1 t2");
 		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{test:string;}", ".t1{test:10px;}", ".t2{test2:11px;}"].join(
-				"\n"
-			)
+			[".t0{test:string;}", ".t1{test:10px;}", ".t2{test2:11px;}"].join("\n")
 		);
 	});
 
@@ -307,11 +303,7 @@ describe("GlobalStyle", () => {
 		globalStyle.getClassNames({
 			"code,kbd, samp": { fontSize: "1em" },
 		});
-		expect(console.log).toHaveBeenNthCalledWith(
-			3,
-			"Rule Inserted:",
-			expect.any(String)
-		);
+		expect(console.log).toHaveBeenNthCalledWith(3, "Rule Inserted:", expect.any(String));
 		global.console = originalConsole;
 	});
 

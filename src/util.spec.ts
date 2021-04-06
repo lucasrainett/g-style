@@ -10,7 +10,6 @@ import {
 	processStringValue,
 	wrapCssRule,
 } from "./util";
-import { GlobalStyle } from "./index";
 
 describe("Util", () => {
 	it("should format class name", () => {
@@ -86,27 +85,17 @@ describe("Util", () => {
 	});
 
 	it("should insert rules when sheet is available", () => {
-		const rules: string[] = [];
 		const rule = "fakeRule";
 		const sheet = ({
 			insertRule: jest.fn(),
 			cssRules: [],
 		} as any) as CSSStyleSheet;
-		insertRule(rules, rule, true, sheet);
-		expect(rules[0]).toEqual(rule);
+		insertRule(rule, true, sheet);
 		expect(sheet.insertRule).toHaveBeenCalledWith(rule, 0);
-	});
-
-	it("should not inject rule if sheet is not available", () => {
-		const rules: string[] = [];
-		const rule = "fakeRule";
-		insertRule(rules, rule, true, undefined);
-		expect(rules[0]).toEqual(rule);
 	});
 
 	it("should log message if insert rule fail", () => {
 		console.error = jest.fn();
-		const rules: string[] = [];
 		const rule = "fakeRule";
 		const sheet = ({
 			insertRule: () => {
@@ -115,8 +104,7 @@ describe("Util", () => {
 			cssRules: [],
 		} as any) as CSSStyleSheet;
 
-		insertRule(rules, rule, true, sheet);
-		expect(rules[0]).toEqual(rule);
+		insertRule(rule, true, sheet);
 		expect(console.error).toHaveBeenCalled();
 	});
 
@@ -134,23 +122,21 @@ describe("Util", () => {
 
 		const result = processStringValue(
 			{
-				key: "fakeKey",
-				value: "fakeValue",
-				childSelectors: [".fakeSelector"],
-				mediaQuery: "@fakeMedia",
-			},
-			{
 				cache,
 				config,
 				rules,
 				sheet,
+			},
+			{
+				key: "fakeKey",
+				value: "fakeValue",
+				childSelectors: [".fakeSelector"],
+				mediaQuery: "@fakeMedia",
 			}
 		);
 
 		expect(Object.keys(cache).length).toBe(1);
-		expect(Object.keys(cache)[0]).toEqual(
-			"@fakeMedia_.fakeSelector_fakeKey_fakeValue"
-		);
+		expect(Object.keys(cache)[0]).toEqual("@fakeMedia_.fakeSelector_fakeKey_fakeValue");
 		expect(result).toEqual("P0");
 	});
 });

@@ -1,5 +1,5 @@
 // https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59
-import { Context, CssRule } from "./types";
+import { Context, CssObject, CssRule, CssValue } from "./types";
 
 const noAutoPixel = [
 	"animation-iteration-count",
@@ -59,62 +59,34 @@ const noAutoPixel = [
 	"stroke-width",
 ];
 
-export function entries(object: any) {
-	return Object.keys(object).map((key) => [key, object[key]]);
-}
+export const entries = (object: any) => Object.keys(object).map((key) => [key, object[key]]);
 
-export function ObjectEntriesShim() {
+export const ObjectEntriesShim = () => {
 	(Object as any).entries = Object.entries || entries;
-}
+};
 
-export function formatClassName(text: string) {
-	return text
+export const formatClassName = (text: string) =>
+	text
 		.trim()
 		.replace(/[A-Z]|^ms/g, "-$&")
 		.toLowerCase();
-}
 
-export function formatCssRule(key: string, value: string) {
-	return `${key}:${value};`;
-}
+export const formatCssRule = (key: string, value: string) => `${key}:${value};`;
 
-export function wrapCssRule(className: string | undefined, cssRule: string) {
-	if (className !== undefined) {
-		return `${className}{${cssRule}}`;
-	} else {
-		return cssRule;
-	}
-}
+export const wrapCssRule = (className: string | undefined, cssRule: string) =>
+	className !== undefined ? `${className}{${cssRule}}` : cssRule;
 
-export function formatChildKey(key: string) {
-	return key.indexOf("&") === 0 ? key.substr(1) : " " + key;
-}
+export const formatChildKey = (key: string) => (key.indexOf("&") === 0 ? key.substr(1) : " " + key);
 
-export function formatPxUnit(key: string, value: string | number): string {
-	if (
-		typeof value === "number" &&
-		value !== 0 &&
-		noAutoPixel.indexOf(key) < 0
-	) {
-		return `${value}px`;
-	} else {
-		return String(value);
-	}
-}
+export const formatPxUnit = (key: string, value: string | number): string =>
+	typeof value === "number" && value !== 0 && noAutoPixel.indexOf(key) < 0
+		? `${value}px`
+		: String(value);
 
-export function getNonceFromMeta() {
-	return document
-		.querySelector("meta[property=csp-nonce]")
-		?.getAttribute("content");
-}
+export const getNonceFromMeta = () =>
+	document.querySelector("meta[property=csp-nonce]")?.getAttribute("content") || undefined;
 
-export function insertRule(
-	rules: string[],
-	rule: string,
-	debug: boolean,
-	sheet?: CSSStyleSheet
-) {
-	rules.push(rule);
+export const insertRule = (rule: string, debug: boolean, sheet?: CSSStyleSheet) => {
 	if (sheet) {
 		try {
 			sheet.insertRule(rule, sheet.cssRules.length);
@@ -123,35 +95,132 @@ export function insertRule(
 			debug && console.error("ERROR: Rule not supported:", rule);
 		}
 	}
-}
+};
 
-export function processStringValue(
-	{ key, value, childSelectors, mediaQuery }: CssRule<string>,
-	{ cache, rules, config, sheet }: Context
-): string {
-	const cacheKey = [mediaQuery, ...childSelectors, key, value]
-		.filter(Boolean)
-		.join("_");
+export const addToCache = <T>(cache: { [key: string]: T }, key: string, callback: () => T) =>
+	(cache[key] = cache[key] || callback());
 
-	cache[cacheKey] =
-		cache[cacheKey] ||
-		(() => {
-			const className = config.prefix + rules.length.toString(36);
+export const processStringValue = (
+	{ cache, rules, config, sheet }: Context,
+	{ key, value, childSelectors, mediaQuery }: CssRule<string>
+): string =>
+	addToCache(cache, [mediaQuery, ...childSelectors, key, value].filter(Boolean).join("_"), () => {
+		const className = config.prefix + rules.length.toString(36);
+		const rule = wrapCssRule(
+			mediaQuery,
+			wrapCssRule([".", className, ...childSelectors].join(""), formatCssRule(key, value))
+		);
+		rules.push(rule);
+		insertRule(rule, !!config.debug, sheet);
+		return className;
+	});
 
-			insertRule(
-				rules,
+export const processSingleValue = (
+	context: Context,
+	{ value, key, ...rest }: CssRule<string | number>
+) =>
+	processStringValue(context, {
+		value: typeof value === "number" ? formatPxUnit(key, value) : value,
+		key,
+		...rest,
+	});
+
+export const processArrayValue = (
+	context: Context,
+	{ value, ...rest }: CssRule<Array<string | number>>
+) =>
+	value
+		.filter((val) => typeof val === "string" || typeof val === "number")
+		.map((value) => processSingleValue(context, { value, ...rest }));
+
+export const processKeyFrame = (
+	{ cache, rules, config, sheet }: Context,
+	keyframeKey: string,
+	keyframeObject: CssObject
+): void => {
+	const rule = wrapCssRule(
+		keyframeKey,
+		Object.entries(keyframeObject)
+			.map(([stageKey, stageContent]) =>
 				wrapCssRule(
-					mediaQuery,
-					wrapCssRule(
-						[".", className, ...childSelectors].join(""),
-						formatCssRule(key, value)
-					)
-				),
-				!!config.debug,
-				sheet
-			);
+					stageKey,
+					Object.entries(stageContent)
+						.map(([stageRuleKey, stageRuleValue]) =>
+							formatCssRule(
+								formatClassName(stageRuleKey),
+								formatPxUnit(stageRuleKey, stageRuleValue)
+							)
+						)
+						.join("")
+				)
+			)
+			.join("")
+	);
+	addToCache(cache, rule, () => {
+		rules.push(rule);
+		insertRule(rule, !!config.debug, sheet);
+		return "cache";
+	});
+};
 
-			return className;
-		})();
-	return cache[cacheKey];
-}
+export const processObjectValue = (
+	context: Context,
+	{ key, value, childSelectors, mediaQuery }: CssRule<CssObject>
+) => {
+	if (key.indexOf("@keyframes") === 0) {
+		processKeyFrame(context, key, value);
+		return [];
+	} else if (key.indexOf("@media") === 0) {
+		return processCssObject(context, value, childSelectors, key);
+	} else {
+		return processCssObject(
+			context,
+			value,
+			[...childSelectors, formatChildKey(key)],
+			mediaQuery
+		);
+	}
+};
+
+export const processValue = (context: Context, { value, ...rest }: CssRule<CssValue>) =>
+	typeof value === "object" && !Array.isArray(value)
+		? processObjectValue(context, {
+				value,
+				...rest,
+		  })
+		: processArrayValue(context, {
+				value: Array.isArray(value) ? value : [value],
+				...rest,
+		  });
+
+export const processMultiKeyValue = (context: Context, { key, ...rest }: CssRule<CssValue>) =>
+	key
+		.split(",")
+		.map(formatClassName)
+		.map((key) => processValue(context, { key, ...rest }));
+
+export const processCssObject = (
+	context: Context,
+	style: CssObject,
+	childSelectors: string[],
+	mediaQuery?: string
+): string[] =>
+	Object.entries(style)
+		.filter(([, value]) => typeof value === "number" || Boolean(value))
+		.map(([key, value]) =>
+			processMultiKeyValue(context, {
+				key,
+				value,
+				childSelectors,
+				mediaQuery,
+			})
+		)
+		.flat(3);
+
+export const createStyleTag = (nonce?: string) => {
+	const style = document.createElement("style");
+	if (nonce) {
+		style.setAttribute("nonce", nonce);
+	}
+	return document.head.appendChild(style).sheet as CSSStyleSheet;
+};
