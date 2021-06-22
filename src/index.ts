@@ -186,7 +186,7 @@ export class GlobalStyle {
 			this.cache[formattedRule] = "cache";
 			this.insertRule(formattedRule);
 		}
-		return "";
+		return [];
 	}
 
 	private parseCssObjectValue(
@@ -196,8 +196,7 @@ export class GlobalStyle {
 		mediaQuery: string = ""
 	): string[] {
 		if (styleKey.indexOf("@keyframes") === 0) {
-			this.parseKeyframe(styleKey, value);
-			return [];
+			return this.parseKeyframe(styleKey, value);
 		} else if (styleKey.indexOf("@media") === 0) {
 			return this.parseCssObject(value, childSelector, styleKey);
 		} else {
