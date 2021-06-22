@@ -10,6 +10,7 @@ export default {
     output: {
         libraryTarget: "umd",
 		library: "GlobalStyle",
+		globalObject: "this",
         filename: "index.umd.js"
     },
     module: {
