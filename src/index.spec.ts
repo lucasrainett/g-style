@@ -165,7 +165,7 @@ describe("GlobalStyle", () => {
 		});
 
 		expect(className).toEqual("t0");
-		expect(globalStyle.getFullCss()).toEqual(".t0{margin:0;}");
+		expect(globalStyle.getFullCss()).toEqual(".t0{margin:0px;}");
 	});
 
 	it("should support multiple instances", () => {
