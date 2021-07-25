@@ -355,6 +355,26 @@ describe("GlobalStyle", () => {
 		);
 	});
 
+	it("should ignore duplicated @keyframes", () => {
+		const globalStyle = new GlobalStyle();
+
+		const rule = {
+			"@keyframes spin": {
+				"0%": {
+					transform: "rotate(0deg)",
+				},
+				"100%": {
+					transform: "rotate(90deg)",
+				},
+			},
+		};
+
+		const className1 = globalStyle.getClassNames(rule);
+		const className2 = globalStyle.getClassNames(rule);
+
+		expect(className1).toEqual(className2);
+	});
+
 	const noAutoPixel = [
 		"animationIterationCount",
 		"borderImageOutset",

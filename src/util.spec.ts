@@ -1,4 +1,11 @@
-import { cleanText, flat, getMetaAttribute, isValidCssValue, rule, wrap } from "./util";
+import {
+	cleanText,
+	flat,
+	getMetaAttribute,
+	isValidCssValue,
+	rule,
+	wrap,
+} from "./util";
 
 describe("Util", () => {
 	it("should clean text", () => {
@@ -18,9 +25,13 @@ describe("Util", () => {
 	it("should get attribute from meta tags", () => {
 		const fakeGetAttribute = jest.fn().mockReturnValue("example-value");
 		(document.querySelector as jest.Mock).mockReturnValue({
-			getAttribute: fakeGetAttribute
+			getAttribute: fakeGetAttribute,
 		});
-		const result = getMetaAttribute("example-mata", "example-content");
+		const result = getMetaAttribute(
+			document,
+			"example-mata",
+			"example-content"
+		);
 		expect(result).toEqual("example-value");
 		expect(document.querySelector).toHaveBeenCalledWith(
 			`meta[property=example-mata]`
@@ -30,7 +41,11 @@ describe("Util", () => {
 
 	it("should return undefined if meta tag doesn't exist", () => {
 		(document.querySelector as jest.Mock).mockReturnValue(null);
-		const result = getMetaAttribute("example-mata", "example-content");
+		const result = getMetaAttribute(
+			document,
+			"example-mata",
+			"example-content"
+		);
 		expect(result).toBeUndefined();
 		expect(document.querySelector).toHaveBeenCalledWith(
 			`meta[property=example-mata]`
@@ -38,7 +53,12 @@ describe("Util", () => {
 	});
 
 	it("should flat lists", () => {
-		expect(flat([[1, 2, 3], [4, 5, 6]])).toEqual([1, 2, 3, 4, 5, 6]);
+		expect(
+			flat([
+				[1, 2, 3],
+				[4, 5, 6],
+			])
+		).toEqual([1, 2, 3, 4, 5, 6]);
 	});
 
 	it("should validate css values", () => {
@@ -49,6 +69,5 @@ describe("Util", () => {
 		expect(isValidCssValue("")).toBeFalsy();
 		expect(isValidCssValue(null as any)).toBeFalsy();
 		expect(isValidCssValue(undefined as any)).toBeFalsy();
-
 	});
 });
