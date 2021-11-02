@@ -78,9 +78,7 @@ describe("GlobalStyle", () => {
 		});
 
 		expect(className).toEqual("t0 t1");
-		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{color:gold;}", ".t1:hover{color:black;}"].join("\n")
-		);
+		expect(globalStyle.getFullCss()).toEqual([".t0{color:gold;}", ".t1:hover{color:black;}"].join("\n"));
 	});
 
 	it("should handles media queries", () => {
@@ -91,9 +89,7 @@ describe("GlobalStyle", () => {
 				color: "black",
 			},
 		});
-		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{color:gold;}", "@media print{.t1{color:black;}}"].join("\n")
-		);
+		expect(globalStyle.getFullCss()).toEqual([".t0{color:gold;}", "@media print{.t1{color:black;}}"].join("\n"));
 	});
 
 	it("should handles media queries and child selectors", () => {
@@ -106,11 +102,7 @@ describe("GlobalStyle", () => {
 				},
 			},
 		});
-		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{color:gold;}", "@media screen{.t1:hover{color:black;}}"].join(
-				"\n"
-			)
-		);
+		expect(globalStyle.getFullCss()).toEqual([".t0{color:gold;}", "@media screen{.t1:hover{color:black;}}"].join("\n"));
 	});
 
 	it("should ignore null values", () => {
@@ -138,9 +130,7 @@ describe("GlobalStyle", () => {
 		});
 
 		expect(className).toEqual("t0 t1");
-		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{color:gold;}", ".t1 .button{color:black;}"].join("\n")
-		);
+		expect(globalStyle.getFullCss()).toEqual([".t0{color:gold;}", ".t1 .button{color:black;}"].join("\n"));
 	});
 
 	it("should handles extension class selectors", () => {
@@ -153,9 +143,7 @@ describe("GlobalStyle", () => {
 		});
 
 		expect(className).toEqual("t0 t1");
-		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{color:gold;}", ".t1.button{color:black;}"].join("\n")
-		);
+		expect(globalStyle.getFullCss()).toEqual([".t0{color:gold;}", ".t1.button{color:black;}"].join("\n"));
 	});
 
 	it("should handles zero value", () => {
@@ -203,14 +191,7 @@ describe("GlobalStyle", () => {
 		});
 
 		expect(className).toEqual("t0 t1 t2 t3");
-		expect(globalStyle.getFullCss()).toEqual(
-			[
-				".t0{color:gold;}",
-				".t1 .box{background-color:red;}",
-				".t2.button{color:black;}",
-				"@media print{.t3{border:1px solid #ccc;}}",
-			].join("\n")
-		);
+		expect(globalStyle.getFullCss()).toEqual([".t0{color:gold;}", ".t1 .box{background-color:red;}", ".t2.button{color:black;}", "@media print{.t3{border:1px solid #ccc;}}"].join("\n"));
 	});
 
 	it("should support multiple values", () => {
@@ -248,11 +229,7 @@ describe("GlobalStyle", () => {
 		});
 
 		expect(className).toEqual("t0 t1 t2");
-		expect(globalStyle.getFullCss()).toEqual(
-			[".t0{test:string;}", ".t1{test:10px;}", ".t2{test2:11px;}"].join(
-				"\n"
-			)
-		);
+		expect(globalStyle.getFullCss()).toEqual([".t0{test:string;}", ".t1{test:10px;}", ".t2{test2:11px;}"].join("\n"));
 	});
 
 	it("should use provided nonce", () => {
@@ -287,13 +264,7 @@ describe("GlobalStyle", () => {
 		});
 
 		expect(className).toEqual("t0 t1 t2");
-		expect(globalStyle.getFullCss()).toEqual(
-			[
-				".t0 code{font-size:1em;}",
-				".t1 kbd{font-size:1em;}",
-				".t2 samp{font-size:1em;}",
-			].join("\n")
-		);
+		expect(globalStyle.getFullCss()).toEqual([".t0 code{font-size:1em;}", ".t1 kbd{font-size:1em;}", ".t2 samp{font-size:1em;}"].join("\n"));
 	});
 
 	it("should support functional programming", () => {
@@ -322,11 +293,7 @@ describe("GlobalStyle", () => {
 		globalStyle.getClassNames({
 			"code,kbd, samp": { fontSize: "1em" },
 		});
-		expect(console.log).toHaveBeenNthCalledWith(
-			3,
-			"Rule Inserted:",
-			expect.any(String)
-		);
+		expect(console.log).toHaveBeenNthCalledWith(3, "Rule Inserted:", expect.any(String));
 		global.console = originalConsole;
 	});
 
@@ -347,12 +314,7 @@ describe("GlobalStyle", () => {
 		});
 
 		expect(className).toEqual("t0");
-		expect(globalStyle.getFullCss()).toEqual(
-			[
-				".t0{animation:spin 5s infinite;}",
-				"@keyframes spin{0%{transform:rotate(0deg);border:1px;}100%{transform:rotate(360deg);border:2px;}}",
-			].join("\n")
-		);
+		expect(globalStyle.getFullCss()).toEqual([".t0{animation:spin 5s infinite;}", "@keyframes spin{0%{transform:rotate(0deg);border:1px;}100%{transform:rotate(360deg);border:2px;}}"].join("\n"));
 	});
 
 	it("should ignore duplicated @keyframes", () => {
@@ -369,10 +331,29 @@ describe("GlobalStyle", () => {
 			},
 		};
 
-		const className1 = globalStyle.getClassNames(rule);
-		const className2 = globalStyle.getClassNames(rule);
+		globalStyle.getClassNames(rule);
+		globalStyle.getClassNames(rule);
 
-		expect(className1).toEqual(className2);
+		expect(globalStyle.getFullCss()).toEqual("@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(90deg);}}");
+	});
+
+	it("should support svg on @keyframes", () => {
+		const globalStyle = new GlobalStyle();
+
+		const rule = {
+			"@keyframes dash": {
+				"0%": {
+					strokeDashoffset: 1000
+				},
+				"100%": {
+					strokeDashoffset: 0
+				}
+			}
+		};
+
+		globalStyle.getClassNames(rule);
+
+		expect(globalStyle.getFullCss()).toEqual("@keyframes dash{0%{stroke-dashoffset:1000;}100%{stroke-dashoffset:0;}}");
 	});
 
 	const noAutoPixel = [
@@ -421,10 +402,7 @@ describe("GlobalStyle", () => {
 	const exampleOfAutoPixel = ["width", "height", "margin", "padding"];
 
 	it("should append px to number properties that are size related", () => {
-		const style = [...exampleOfAutoPixel, ...noAutoPixel].reduce(
-			(final, item) => ({ ...final, [item]: 10 }),
-			{}
-		);
+		const style = [...exampleOfAutoPixel, ...noAutoPixel].reduce((final, item) => ({ ...final, [item]: 10 }), {});
 
 		const globalStyle = new GlobalStyle();
 		globalStyle.getClassNames(style);

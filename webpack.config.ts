@@ -6,7 +6,7 @@ export default {
     resolve: {
         extensions: [".ts"],
     },
-	target: "es5",
+	target: ["es5", "web"],
     output: {
         libraryTarget: "umd",
 		library: "GlobalStyle",

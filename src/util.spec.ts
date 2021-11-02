@@ -1,17 +1,8 @@
-import {
-	cleanText,
-	flat,
-	getMetaAttribute,
-	isValidCssValue,
-	rule,
-	wrap,
-} from "./util";
+import { cleanText, flat, getMetaAttribute, isValidCssValue, rule, wrap } from "./util";
 
 describe("Util", () => {
 	it("should clean text", () => {
-		expect(
-			["TextText", "   asdf   ", "msTest", "asdfAsdf"].map(cleanText)
-		).toEqual(["-text-text", "asdf", "-ms-test", "asdf-asdf"]);
+		expect(["TextText", "   asdf   ", "msTest", "asdfAsdf"].map(cleanText)).toEqual(["-text-text", "asdf", "-ms-test", "asdf-asdf"]);
 	});
 
 	it("should wrap css value into css rule", () => {
@@ -27,29 +18,17 @@ describe("Util", () => {
 		(document.querySelector as jest.Mock).mockReturnValue({
 			getAttribute: fakeGetAttribute,
 		});
-		const result = getMetaAttribute(
-			document,
-			"example-mata",
-			"example-content"
-		);
+		const result = getMetaAttribute(document, "example-mata", "example-content");
 		expect(result).toEqual("example-value");
-		expect(document.querySelector).toHaveBeenCalledWith(
-			`meta[property=example-mata]`
-		);
+		expect(document.querySelector).toHaveBeenCalledWith(`meta[property=example-mata]`);
 		expect(fakeGetAttribute).toHaveBeenCalledWith("example-content");
 	});
 
 	it("should return undefined if meta tag doesn't exist", () => {
 		(document.querySelector as jest.Mock).mockReturnValue(null);
-		const result = getMetaAttribute(
-			document,
-			"example-mata",
-			"example-content"
-		);
+		const result = getMetaAttribute(document, "example-mata", "example-content");
 		expect(result).toBeUndefined();
-		expect(document.querySelector).toHaveBeenCalledWith(
-			`meta[property=example-mata]`
-		);
+		expect(document.querySelector).toHaveBeenCalledWith(`meta[property=example-mata]`);
 	});
 
 	it("should flat lists", () => {
