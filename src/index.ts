@@ -44,15 +44,17 @@ export class GlobalStyle {
 	}
 
 	private static instance: GlobalStyle;
+	private static getInstance(){
+		this.instance = this.instance || new GlobalStyle();
+		return this.instance;
+	}
 
 	public static getClassNames(style: CssObject) {
-		this.instance = this.instance || new GlobalStyle();
-		return this.instance.getClassNames(style);
+		return this.getInstance().getClassNames(style);
 	}
 
 	public static getFullCss() {
-		this.instance = this.instance || new GlobalStyle();
-		return this.instance.getFullCss();
+		return this.getInstance().getFullCss();
 	}
 
 	private insertRule = (rule: string) => {
