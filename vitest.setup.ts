@@ -1,9 +1,11 @@
+import { vi } from "vitest";
+
 Object.defineProperty(document, "head", {
-    value: {
-        appendChild: jest.fn()
-    }
+	value: {
+		appendChild: vi.fn(),
+	},
 });
 
 Object.defineProperty(document, "querySelector", {
-	value:  jest.fn()
+	value: vi.fn(),
 });
