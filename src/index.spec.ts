@@ -1,11 +1,12 @@
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { GlobalStyle, css } from "./index";
 
 describe("GlobalStyle", () => {
-	const insertRule = jest.fn();
+	const insertRule = vi.fn();
 
 	beforeEach(() => {
-		jest.resetAllMocks();
-		(document.head.appendChild as jest.Mock).mockReturnValue({
+		vi.resetAllMocks();
+		(document.head.appendChild as Mock).mockReturnValue({
 			sheet: {
 				insertRule,
 				cssRules: [],
@@ -217,7 +218,7 @@ describe("GlobalStyle", () => {
 				".t6.button{display:-moz-flex;}",
 				"@media print{.t3{display:flex;}}",
 				"@media print{.t4{display:-ms-flex;}}",
-			].join("\n")
+			].join("\n"),
 		);
 	});
 
@@ -246,7 +247,7 @@ describe("GlobalStyle", () => {
 		const cspMeta = document.createElement("meta");
 		cspMeta.setAttribute("property", "csp-nonce");
 		cspMeta.setAttribute("content", "random-nonce");
-		(document.querySelector as jest.Mock).mockReturnValue(cspMeta);
+		(document.querySelector as Mock).mockReturnValue(cspMeta);
 
 		const globalStyle = new GlobalStyle();
 		globalStyle.getClassNames({ border: "1px" });
@@ -286,8 +287,8 @@ describe("GlobalStyle", () => {
 	it("should support debug", () => {
 		const originalConsole = global.console;
 		(global.console as any) = {
-			log: jest.fn(),
-			error: jest.fn(),
+			log: vi.fn(),
+			error: vi.fn(),
 		};
 		const globalStyle = new GlobalStyle({ debug: true });
 		globalStyle.getClassNames({
@@ -343,12 +344,12 @@ describe("GlobalStyle", () => {
 		const rule = {
 			"@keyframes dash": {
 				"0%": {
-					strokeDashoffset: 1000
+					strokeDashoffset: 1000,
 				},
 				"100%": {
-					strokeDashoffset: 0
-				}
-			}
+					strokeDashoffset: 0,
+				},
+			},
 		};
 
 		globalStyle.getClassNames(rule);
@@ -454,7 +455,7 @@ describe("GlobalStyle", () => {
 				".tx{tab-size:10;}",
 				".ty{widows:10;}",
 				".tz{z-index:10;}",
-			].join("\n")
+			].join("\n"),
 		);
 	});
 });
